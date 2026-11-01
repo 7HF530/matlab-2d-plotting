@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>إتقان الرسم ثنائي الأبعاد في MATLAB (2D Plotting)</title>
+<style>
+:root{--bg1:#07070d;--bg2:#12102b;--card:#171a33;--ink:#e9ecff;--mut:#9aa3c7;--ac:#8b7bff;--ac2:#4cc9f0;--red:#ff5d6c;--grn:#3ddc97;--cb:#0b0e1c;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 700px at 80% -10%,#2a1f6b 0%,transparent 60%),linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ink);font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;font-size:18px;line-height:1.7;overflow:hidden}
+#pg{position:fixed;top:0;left:0;right:0;height:4px;background:#ffffff14;z-index:5}#pg i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+#deck{position:absolute;inset:4px 0 58px 0}
+.slide{display:none;height:100%;overflow:auto;padding:28px min(6vw,72px) 36px}
+.slide.on{display:block}
+.tag{display:inline-block;font-size:14px;font-weight:700;color:var(--ac2);background:#4cc9f01a;border-radius:20px;padding:2px 14px;margin-bottom:8px}
+h1{font-size:clamp(34px,5vw,60px);line-height:1.25;background:linear-gradient(90deg,#fff,var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:clamp(26px,3.4vw,40px);line-height:1.3;margin-bottom:14px}
+h3{font-size:20px;margin:12px 0 6px;color:var(--ac2)}
+p,li{color:var(--ink)}li{margin:4px 18px 4px 0}
+.mut{color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:12px 0}
+.card{background:var(--card);border:1px solid #ffffff14;border-radius:18px;padding:16px 20px}
+.card b.t{display:block;color:var(--ac);margin-bottom:4px}
+code,pre{font-family:Consolas,"Courier New",monospace;direction:ltr;unicode-bidi:isolate}
+code{background:#ffffff14;border-radius:6px;padding:1px 7px;font-size:.92em;color:#ffd479}
+pre{background:var(--cb);border:1px solid #ffffff18;border-radius:14px;padding:14px 18px;font-size:16px;line-height:1.55;text-align:left;overflow:auto;white-space:pre;margin:8px 0}
+pre i{font-style:normal}.c{color:#6c7a9c}.s{color:#9ece6a}.k{color:#bb9af7}.n{color:#ff9e64}.f{color:#7dcfff}
+.lbl{font-weight:700;font-size:16px;margin-top:10px}
+.bad .lbl{color:var(--red)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+button{font-family:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:9px 18px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#6b5bff,#9b5cff)}
+button.alt{background:linear-gradient(135deg,#0ea5c6,#3b82f6)}button.sm{padding:5px 12px;font-size:14px;background:#ffffff1c}button.sm.on{background:var(--ac)}
+.box{border-radius:14px;padding:12px 18px;margin:10px 0}
+.err{background:#ff5d6c1a;border:1px solid #ff5d6c66}.err .lbl{color:var(--red)}
+.ok{background:#3ddc971a;border:1px solid #3ddc9766}.ok .lbl{color:var(--grn)}
+.warn{background:#ffd4791a;border:1px solid #ffd47966}
+.errmsg{font-family:Consolas,monospace;direction:ltr;text-align:left;color:#ff8a95;font-size:15px}
+.fig{background:#fff;border-radius:10px;overflow:hidden;max-width:760px;margin:8px 0;border:1px solid #ffffff30}
+.fig .bar{background:#e8e8ee;color:#333;font:600 13px Arial;padding:4px 10px;direction:ltr;text-align:left}
+.fig svg{display:block;width:100%;height:auto}
+.tabs{display:flex;gap:8px;margin:6px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:16px}th,td{border:1px solid #ffffff1c;padding:6px 12px;text-align:right}th{background:#ffffff10;color:var(--ac2)}td:first-child{direction:ltr;text-align:left}
+details{background:var(--card);border:1px solid #ffffff14;border-radius:14px;padding:10px 16px;margin:10px 0}summary{cursor:pointer;font-weight:700}
+.cover{display:flex;flex-direction:column;justify-content:center;min-height:100%;gap:10px}
+#sig{position:fixed;left:14px;bottom:66px;z-index:4;font:12px Arial,sans-serif;color:var(--mut);direction:ltr;opacity:.85;pointer-events:none}
+#bar{position:fixed;inset:auto 0 0 0;height:58px;padding-bottom:env(safe-area-inset-bottom,0px);display:flex;gap:14px;align-items:center;justify-content:center;background:#0b0b16f0;border-top:1px solid #ffffff18;z-index:5}
+#bar span{color:var(--mut);min-width:70px;text-align:center;direction:ltr}
+input[type=range]{width:min(420px,70%);direction:ltr}
+.sel{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px;align-items:center}
+</style></head><body>
+<div id="pg"><i></i></div><div id="deck"></div><div id="sig">Eng: Hassan Farid</div>
+<div id="bar"><button id="nx">التالي ›</button><span id="ct"></span><button id="pv">‹ السابق</button></div>
+<script>
+const r=String.raw;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const hl=c=>esc(c).replace(/(%.*$)|('[^'\n]*')|\b(for|end|if|else|while|function|hold|on|off|figure|grid|close|all)\b|(\b\d+(?:\.\d+)?\b)|(@\([a-z]+\))/gm,(m,a,b,k,n,f)=>a?`<i class=c>${a}</i>`:b?`<i class=s>${b}</i>`:k?`<i class=k>${k}</i>`:n?`<i class=n>${n}</i>`:`<i class=f>${f}</i>`);
+const code=c=>`<pre dir="ltr">${hl(c)}</pre>`;
+/* ---------- plotting engine (SVG) ---------- */
+const lin=(a,b,n)=>Array.from({length:n},(_,i)=>a+(b-a)*i/(n-1));
+const DC=['#0072BD','#D95319','#EDB120','#7E2F8E','#77AC30','#4DBEEE','#A2142F'];
+const CM={y:'#e6c800',m:'#ff00ff',c:'#00c8c8',r:'#ff0000',g:'#00c000',b:'#0000ff',k:'#000000'};
+const DASH={'-':'','--':'9 6',':':'2 5','-.':'9 5 2 5'};
+function ps(s){s=s||'';const m=s.match(/^([ymcrgbk])?(--|-\.|-|:)?([o+*.sd])?$/)||[];return{c:m[1]?CM[m[1]]:null,ls:m[2]||(m[3]?'':'-'),mk:m[3]||''}}
+const L=(x,y,sp,lw,o)=>Object.assign({t:'l',x,y,lw:lw||1,mf:null},ps(sp),o||{});
+function tex(s){s=s.replace(/\\(pi|omega|alpha|theta|Delta|circ)/g,(m,k)=>({pi:'π',omega:'ω',alpha:'α',theta:'θ',Delta:'Δ',circ:'°'}[k]));let o='',i=0;while(i<s.length){const c=s[i];if((c==='^'||c==='_')&&i+1<s.length){let b,n;if(s[i+1]==='{'){const j=s.indexOf('}',i);b=s.slice(i+2,j);n=j-i+1}else{b=s[i+1];n=2}o+=`<tspan baseline-shift="${c==='^'?'super':'sub'}" font-size="75%">${tex(b)}</tspan>`;i+=n}else{o+=esc(c);i++}}return o}
+const fmt=v=>{let t=(+v.toFixed(6)).toString();return t==='-0'?'0':t};
+function nice(lo,hi,n){n=n||6;if(lo===hi){lo-=1;hi+=1}const q=(hi-lo)/n,p=10**Math.floor(Math.log10(q)),f=q/p,st=(f<1.5?1:f<3?2:f<7?5:10)*p,a=Math.floor(lo/st+1e-9)*st,b=Math.ceil(hi/st-1e-9)*st,t=[];for(let v=a;v<=b+st/2;v+=st)t.push(+v.toFixed(10));return t}
+let uid=0;
+function ranges(items){let xs=[],ys=[];items.forEach(i=>{if(i.t==='l'){xs.push(...i.x);ys.push(...i.y)}else if(i.t==='r'){xs.push(i.x0,i.x1);ys.push(i.y0,i.y1)}else if(i.t==='a'){xs.push(...i.x);ys.push(0,...i.y)}else if(i.t==='e'){xs.push(...i.x);i.y.forEach((v,k)=>ys.push(v-i.e,v+i.e))}});const f=a=>a.filter(isFinite);return[f(xs),f(ys)]}
+function mkScale(lim,A,B,lg){const T=lg?Math.log10:(v=>v),a=T(lim[0]),b=T(lim[1]);return v=>A+(T(v)-a)/(b-a)*(B-A)}
+function axis1(vals,lg,given){let lim,tk;if(lg){const a=Math.floor(Math.log10(Math.min(...vals.filter(v=>v>0)))),b=Math.ceil(Math.log10(Math.max(...vals)));lim=given||[10**a,10**b];tk=[];for(let k=Math.round(Math.log10(lim[0]));k<=Math.round(Math.log10(lim[1]));k++)tk.push(10**k)}else{const mn=Math.min(...vals),mx=Math.max(...vals),t=nice(mn,mx);lim=given||[t[0],t[t.length-1]];tk=nice(lim[0],lim[1]).filter(v=>v>=lim[0]-1e-9&&v<=lim[1]+1e-9)}return{lim,tk}}
+function marker(m,x,y,c,f){const s=4.5;if(m==='o')return`<circle cx="${x}" cy="${y}" r="${s}" fill="${f||'none'}" stroke="${c}"/>`;if(m==='s')return`<rect x="${x-s}" y="${y-s}" width="${2*s}" height="${2*s}" fill="${f||'none'}" stroke="${c}"/>`;if(m==='d')return`<path d="M${x} ${y-s-1}L${x+s+1} ${y}L${x} ${y+s+1}L${x-s-1} ${y}Z" fill="none" stroke="${c}"/>`;if(m==='+')return`<path d="M${x-s} ${y}H${x+s}M${x} ${y-s}V${y+s}" stroke="${c}"/>`;if(m==='*')return`<path d="M${x-s} ${y}H${x+s}M${x} ${y-s}V${y+s}M${x-3} ${y-3}L${x+3} ${y+3}M${x-3} ${y+3}L${x+3} ${y-3}" stroke="${c}"/>`;return`<circle cx="${x}" cy="${y}" r="1.8" fill="${c}"/>`}
+function drawItems(items,sx,sy,state){let o='';items.forEach(i=>{if(i.t==='l'){const c=i.c||DC[state.k++%7];i._c=c;let d='';i.x.forEach((xv,k)=>{const yv=i.y[k];if(!isFinite(yv)||!isFinite(xv)){return}d+=(d&&isFinite(i.y[k-1])?'L':'M')+sx(xv).toFixed(1)+' '+sy(yv).toFixed(1)});if(i.ls!==''&&d)o+=`<path d="${d}" fill="none" stroke="${c}" stroke-width="${i.lw*1.4}" stroke-dasharray="${DASH[i.ls]}"/>`;if(i.mk)i.x.forEach((xv,k)=>{o+=marker(i.mk,sx(xv),sy(i.y[k]),c,i.mf)})}else if(i.t==='r'){o+=`<rect x="${sx(i.x0)}" y="${sy(i.y1)}" width="${Math.max(0,sx(i.x1)-sx(i.x0)-(i.gap||0))}" height="${sy(i.y0)-sy(i.y1)}" fill="${i.f}" stroke="${i.s||'#fff'}" stroke-width="0.7"/>`}else if(i.t==='a'){let d=`M${sx(i.x[0])} ${sy(0)}`;i.x.forEach((xv,k)=>d+=`L${sx(xv).toFixed(1)} ${sy(i.y[k]).toFixed(1)}`);d+=`L${sx(i.x[i.x.length-1])} ${sy(0)}Z`;o+=`<path d="${d}" fill="${i.f}"/>`;i._c=i.f}else if(i.t==='e'){const c=i.c||'#000';i.x.forEach((xv,k)=>{const a=sy(i.y[k]-i.e),b=sy(i.y[k]+i.e),X=sx(xv);o+=`<path d="M${X} ${a}V${b}M${X-5} ${a}H${X+5}M${X-5} ${b}H${X+5}" stroke="${c}"/>`;if(i.mk)o+=marker(i.mk,X,sy(i.y[k]),c,i.mf)});i._c=c}else if(i.t==='tx'){o+=`<text x="${sx(i.x)}" y="${sy(i.y)}" text-anchor="middle" font-size="12" fill="#222">${esc(i.s)}</text>`}});return o}
+function panel(sp,X0,Y0,W0,H0){
+ const ml=52,mr=sp.yy?52:16,mt=sp.ttl?32:14,mb=sp.xl?42:28;let X=X0+ml,Y=Y0+mt,W=W0-ml-mr,H=H0-mt-mb;
+ if(sp.polar)return polar(sp,X0,Y0,W0,H0);
+ const lg=sp.log||'',lx=lg.includes('x'),ly=lg.includes('y'),[xs,ys]=ranges(sp.items);
+ const ax=axis1(xs,lx,sp.xlim),ay=axis1(ys,ly,sp.ylim);
+ if(sp.eq){const rx=ax.lim[1]-ax.lim[0],ry=ay.lim[1]-ay.lim[0],k=Math.min(W/rx,H/ry),nw=k*rx,nh=k*ry;X+=(W-nw)/2;Y+=(H-nh)/2;W=nw;H=nh}
+ const sx=mkScale(ax.lim,X,X+W,lx),sy=mkScale(ay.lim,Y+H,Y,ly),id='cp'+(uid++),st={k:0};let o=`<clipPath id="${id}"><rect x="${X}" y="${Y}" width="${W}" height="${H}"/></clipPath><rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="#fff"/>`;
+ const xt=sp.xtk||ax.tk;
+ xt.forEach(v=>{const x=sx(v);if(sp.grid)o+=`<path d="M${x} ${Y}V${Y+H}" stroke="#dcdcdc"/>`;o+=`<path d="M${x} ${Y+H}v-4" stroke="#262626"/><text x="${x}" y="${Y+H+16}" text-anchor="middle" font-size="12" fill="#262626">${lx?'10<tspan baseline-shift="super" font-size="75%">'+Math.round(Math.log10(v))+'</tspan>':(sp.xt?esc(sp.xt[v-1]):fmt(v))}</text>`});
+ ay.tk.forEach(v=>{const y=sy(v);if(sp.grid)o+=`<path d="M${X} ${y}H${X+W}" stroke="#dcdcdc"/>`;o+=`<path d="M${X} ${y}h4" stroke="#262626"/><text x="${X-6}" y="${y+4}" text-anchor="end" font-size="12" fill="${sp.yy?DC[0]:'#262626'}">${ly?'10<tspan baseline-shift="super" font-size="75%">'+Math.round(Math.log10(v))+'</tspan>':fmt(v)}</text>`});
+ o+=`<g clip-path="url(#${id})">${drawItems(sp.items,sx,sy,st)}</g>`;
+ if(sp.yy){const R=sp.yy,[,y2]=ranges(R.items),a2=axis1(y2,false,R.ylim),s2=mkScale(a2.lim,Y+H,Y,false),s3={k:1};o+=`<g clip-path="url(#${id})">${drawItems(R.items,sx,s2,s3)}</g>`;a2.tk.forEach(v=>{o+=`<text x="${X+W+6}" y="${s2(v)+4}" font-size="12" fill="${DC[1]}">${fmt(v)}</text>`});o+=`<text transform="translate(${X+W+42} ${Y+H/2}) rotate(90)" text-anchor="middle" font-size="13" fill="${DC[1]}">${tex(R.yl)}</text>`}
+ o+=`<rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="none" stroke="#262626"/>`;
+ if(sp.ttl)o+=`<text x="${X+W/2}" y="${Y-10}" text-anchor="middle" font-size="${sp.tfs||13}" font-weight="700" fill="#111">${tex(sp.ttl)}</text>`;
+ if(sp.xl)o+=`<text x="${X+W/2}" y="${Y+H+36}" text-anchor="middle" font-size="13" fill="#111">${tex(sp.xl)}</text>`;
+ if(sp.yl)o+=`<text transform="translate(${X-38} ${Y+H/2}) rotate(-90)" text-anchor="middle" font-size="13" fill="${sp.yy?DC[0]:'#111'}">${tex(sp.yl)}</text>`;
+ if(sp.leg){const its=sp.items.filter(i=>i.t==='l'||i.t==='e'||i.t==='a').slice(0,sp.leg.length),w=Math.max(...sp.leg.map(s=>s.length))*6.6+46,h=its.length*18+8,lx0=sp.legpos==='nw'?X+8:X+W-w-8,ly0=Y+8;o+=`<rect x="${lx0}" y="${ly0}" width="${w}" height="${h}" fill="#fffffff0" stroke="#999"/>`;its.forEach((i,k)=>{const y=ly0+16+k*18,c=i._c||'#000';o+=`<path d="M${lx0+6} ${y-4}h22" stroke="${i.t==='a'?i.f:c}" stroke-width="${i.t==='a'?6:1.6}" stroke-dasharray="${i.t==='l'?DASH[i.ls]:''}"/>`;if(i.mk)o+=marker(i.mk,lx0+17,y-4,c,i.mf);o+=`<text x="${lx0+34}" y="${y}" font-size="12" fill="#111">${tex(sp.leg[k])}</text>`})}
+ return o}
+function polar(sp,X0,Y0,W0,H0){const cx=X0+W0/2,cy=Y0+H0/2+8,R=Math.min(W0,H0)/2-30;let o='';for(let k=1;k<=5;k++)o+=`<circle cx="${cx}" cy="${cy}" r="${R*k/5}" fill="none" stroke="#d0d0d0"/><text x="${cx+3}" y="${cy-R*k/5+11}" font-size="10" fill="#555">${fmt(k/5)}</text>`;for(let a=0;a<360;a+=30){const t=a*Math.PI/180;o+=`<path d="M${cx} ${cy}L${cx+R*Math.cos(t)} ${cy-R*Math.sin(t)}" stroke="#d0d0d0"/><text x="${cx+(R+16)*Math.cos(t)}" y="${cy-(R+16)*Math.sin(t)+4}" text-anchor="middle" font-size="12" fill="#222">${a}°</text>`}let d='';sp.th.forEach((t,i)=>{const r=sp.r[i];d+=(i?'L':'M')+(cx+R*r*Math.cos(t)).toFixed(1)+' '+(cy-R*r*Math.sin(t)).toFixed(1)});o+=`<path d="${d}" fill="none" stroke="${DC[0]}" stroke-width="1.8"/>`;if(sp.ttl)o+=`<text x="${X0+W0/2}" y="${Y0+16}" text-anchor="middle" font-size="14" font-weight="700" fill="#111">${tex(sp.ttl)}</text>`;return o}
+function fig(specs,m,n){m=m||1;n=n||1;const W=680,H=m>1?520:400;let o='';specs.forEach((s,i)=>{o+=panel(s,(i%n)*W/n,Math.floor(i/n)*H/m,W/n,H/m)});return`<div class="fig"><div class="bar">Figure 1</div><svg viewBox="0 0 ${W} ${H}" font-family="Helvetica,Arial,sans-serif"><rect width="${W}" height="${H}" fill="#f4f4f4"/>${o}</svg></div>`}
+/* ---------- data helpers ---------- */
+let seed=0;const rnd=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const randn=()=>Math.sqrt(-2*Math.log(1-rnd()))*Math.cos(2*Math.PI*rnd());
+const P=Math.PI,sin=Math.sin,cos=Math.cos,exp=Math.exp;
+/* ---------- examples ---------- */
+const E={};
+E[4]={sec:'القسم الثاني: الأوامر الأساسية',h:'الأمر الأساسي plot وأول رسمة',intro:'<p>الصيغة: <code>plot(x, y)</code> حيث <code>x</code> و <code>y</code> متجهان بنفس الطول تماماً.</p><p class="mut">مثال تطبيقي أول: موجة جيب التمام.</p>',
+bug:r`x = linspace(0, 1, 101);
+y = 5cos(3*pi*x);
+plot(x, y)`,fix:r`x = linspace(0, 1, 101);
+y = 5*cos(3*pi*x);
+plot(x, y)
+xlabel('x'); ylabel('y = 5cos(3\pix)');
+title('A cosine wave'); grid on`,
+why:'نسيت علامة الضرب <code>*</code> بين الرقم 5 ودالة <code>cos</code>. ماتلاب مش بيفهم 5cos زي الرياضيات، لازم تكتب 5*cos.',err:'Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.',
+fixFn:()=>{const x=lin(0,1,101);return fig([{items:[L(x,x.map(v=>5*cos(3*P*v)))],xl:'x',yl:'y = 5cos(3\\pix)',ttl:'A cosine wave',grid:1}])}};
+E[11]={sec:'القسم الثالث: تنسيق الجراف وتعدد الرسومات',h:'مثال محلول: منحنيات شيبيشيف Chebyshev',intro:'<p>رسم <code>T_j(x) = cos(j·acos(x))</code> للرتب 1 و3 و5 و7 على الفترة <code>[-1, 1]</code> باستخدام لوب.</p>',
+bug:r`x = linspace(-1, 1, 400);
+figure;
+for j = [1 3 5 7]
+    plot(x, cos(j*acos(x)), 'LineWidth', 1.3)
+end
+grid on; xlabel('x'); ylabel('T_j(x)');
+title('Chebyshev polynomials');
+legend('j = 1', 'j = 3', 'j = 5', 'j = 7', 'Location', 'best')`,
+fixFn0:b=>b.replace('figure;','figure; hold on').replace('end\ngrid on','end\nhold off\ngrid on'),
+why:'نسيت <code>hold on</code> قبل اللوب، فكل <code>plot</code> بتمسح اللي قبلها ولا يفضل غير منحنى <code>j = 7</code>. الحل: <code>hold on</code> قبل اللوب و<code>hold off</code> بعده.',
+err:'Warning: Ignoring extra legend entries.   (مفيش error، بس الرسمة غلط: منحنى واحد بس)',
+chebs:()=>{const x=lin(-1,1,400);return[1,3,5,7].map(j=>L(x,x.map(v=>cos(j*Math.acos(v))),'',1.3))},
+fixFn(){return fig([{items:this.chebs(),grid:1,xl:'x',yl:'T_j(x)',ttl:'Chebyshev polynomials',leg:['j = 1','j = 3','j = 5','j = 7'],xlim:[-1,1]}])},
+wrongFn(){const x=lin(-1,1,400);return fig([{items:[L(x,x.map(v=>cos(7*Math.acos(v))),'',1.3)],grid:1,xl:'x',yl:'T_j(x)',ttl:'Chebyshev polynomials',leg:['j = 1'],xlim:[-1,1]}])}};
+E[13]={sec:'القسم الرابع: Figure و subplot و fplot',h:'رسم الدوال مباشرة بأمر fplot',intro:'<p>لو معاك دالة رياضية ومش عايز تحسب متجه نقاط بنفسك، <code>fplot</code> بيختار النقاط أوتوماتيك ويكثفها في الأماكن اللي الدالة بتتغير فيها بسرعة. الصيغة: <code>fplot(@(t) fun, [tmin tmax])</code>.</p>',
+bug:r`fplot(@(x) exp(-0.2*x)*sin(3*x), [0 10])
+grid on; title('A damped oscillation')`,fixFn0:b=>b.replace(')*sin',').*sin'),
+why:'نسيت النقطة في ضرب الدالتين: لازم <code>.*</code> جوه <code>fplot</code> عشان الدالة تتحسب على متجه كامل.',
+err:"Warning: Function behaves unexpectedly on array inputs. To improve performance, properly vectorize your function to return an output with the same size and shape as the input arguments.   (حسب إصدار ماتلاب: الرسمة بتظهر لكن أبطأ، أو تطلع error)",
+fixFn:()=>{const x=lin(0,10,800);return fig([{items:[L(x,x.map(v=>exp(-0.2*v)*sin(3*v)))],grid:1,ttl:'A damped oscillation',xlim:[0,10]}])}};
+E[14]={sec:'القسم الرابع: Figure و subplot و fplot',h:'تقسيم الشاشة بأمر subplot',intro:'<p><code>subplot(m, n, p)</code>: <code>m</code> عدد الصفوف، <code>n</code> عدد الأعمدة، و<code>p</code> مكان الرسمة الحالية (العد بيبدأ بالصفوف). شبكة 2×2 لأربع دوال:</p>',
+bug:r`x = linspace(-5, 5, 200);
+figure
+subplot(2,2,1); plot(x, 1/(1+x^2)); title('1/(1+x^2)'); grid on
+subplot(2,2,2); plot(x, sin(x));    title('sin x');     grid on
+subplot(2,2,3); plot(x, x.^3);      title('x^3');       grid on
+subplot(2,2,4); plot(x, exp(-x.^2));title('e^{-x^2}');  grid on`,fixFn0:b=>b.replace('1/(1+x^2));','1./(1+x.^2));'),
+why:'في الرسمة الأولى كتبت <code>1/(1+x^2)</code> من غير نقط. التصحيح <code>1./(1+x.^2)</code> عشان العمليات تتنفذ عنصر عنصر.',err:"Error using ^ \nIncorrect dimensions for raising a matrix to a power. Check that the matrix is square and the power is a scalar. To perform elementwise matrix powers, use '.^'.",
+fixFn:()=>{const x=lin(-5,5,200),g=(t,f,o)=>Object.assign({items:[L(x,x.map(f))],ttl:t,grid:1,xlim:[-5,5]},o||{});return fig([g('1/(1+x^2)',v=>1/(1+v*v)),g('sin x',sin),g('x^3',v=>v**3),g('e^{-x^2}',v=>exp(-v*v))],2,2)}};
+E[15]={sec:'القسم الرابع: Figure و subplot و fplot',h:'سؤال امتحانات المعمل المشهور (Lab Exam Hint)',intro:'<p>ارسم <code>y = (sin 7x − sin 5x)/(cos 7x + cos 5x)</code> باستخدام 200 نقطة من −1.57 إلى 1.57، واضبط المحاور: <code>−2 ≤ x ≤ 2</code> و<code>−10 ≤ y ≤ 10</code>.</p>',
+bug:r`x = linspace(-1.57, 1.57, 200);
+y = (sin(7*x)-sin(5*x))/(cos(7*x)+cos(5*x));
+plot(x, y);
+axis(-2, 2, -10, 10);`,
+fix:r`x = linspace(-1.57, 1.57, 200);
+y = (sin(7*x)-sin(5*x))./(cos(7*x)+cos(5*x));
+plot(x, y);
+axis([-2 2 -10 10]);`,
+why:'غلطتين! (1) نسيت النقطة قبل القسمة <code>./</code>: القسمة العادية بين متجهين بتدي رقم واحد، فـ y بقى رقم واحد ومش بنفس طول x. (2) <code>axis</code> بتاخد متجه بين أقواس مربعة <code>axis([-2 2 -10 10])</code> مش أرقام مفصولة بفواصل. معلومة: المعادلة دي بتتبسط لـ tan(x).',err:'Error using plot\nVectors must be the same length.',
+fixFn:()=>{const x=lin(-1.57,1.57,200);return fig([{items:[L(x,x.map(v=>(sin(7*v)-sin(5*v))/(cos(7*v)+cos(5*v))))],xlim:[-2,2],ylim:[-10,10]}])}};
+E[17]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.1: دائرة وقطع ناقص معاً',intro:'<p>ارسم الدائرة <code>x² + y² = 4</code> والقطع الناقص <code>x²/9 + y²/4 = 1</code> بحيث تظهر الدائرة دائرية فعلاً.</p>',
+bug:r`t = linspace(0, 2*pi, 200);
+plot(2*cos(t), 2*sin(t), b, 3*cos(t), 2*sin(t), r--, 'LineWidth', 1.3)
+axis equal; grid on
+legend('circle r = 2', 'ellipse a = 3, b = 2')
+title('Parametric curves')`,fixFn0:b=>b.replace(', b,',", 'b',").replace(', r--,',", 'r--',"),
+why:'كتبت <code>b</code> و<code>r--</code> من غير علامات تنصيص. ماتلاب فاكرهم أسماء متغيرات مش معرّفة. لازم <code>\'b\'</code> و<code>\'r--\'</code>.',err:"Unrecognized function or variable 'b'.",
+fixFn:()=>{const t=lin(0,2*P,200);return fig([{items:[L(t.map(v=>2*cos(v)),t.map(v=>2*sin(v)),'b'),L(t.map(v=>3*cos(v)),t.map(v=>2*sin(v)),'r--',1.3)],eq:1,grid:1,leg:['circle r = 2','ellipse a = 3, b = 2'],ttl:'Parametric curves'}])}};
+E[18]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.2: منحنيات ليساجو (الأوسيلوسكوب)',intro:'<p>ارسم <code>x = sin(3t)</code> و<code>y = sin(4t)</code> للفترة <code>0 ≤ t ≤ 2π</code>.</p>',
+bug:r`t = linspace(0, 2*pi, 1000);
+plot(sin(3t), sin(4t), 'm', 'LineWidth', 1.2)
+axis equal; axis([-1.1 1.1 -1.1 1.1])
+title('Lissajous figure x = sin 3t, y = sin 4t')`,fixFn0:b=>b.replace('sin(3t), sin(4t)','sin(3*t), sin(4*t)'),
+why:'كتبت <code>3t</code> و<code>4t</code> من غير علامة الضرب. الصح <code>3*t</code> و<code>4*t</code>.',err:'Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.',
+fixFn:()=>{const t=lin(0,2*P,1000);return fig([{items:[L(t.map(v=>sin(3*v)),t.map(v=>sin(4*v)),'m',1.2)],eq:1,xlim:[-1.1,1.1],ylim:[-1.1,1.1],ttl:'Lissajous figure x = sin 3t, y = sin 4t'}])}};
+E[19]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.3: الاضمحلال الإشعاعي (نصف لوغاريتمي)',intro:'<p>ارسم <code>A(t) = 1000·e^(−0.35t)</code> للفترة <code>0 ≤ t ≤ 20</code> على محاور خطية ومحور رأسي لوغاريتمي جنباً إلى جنب: الأسي بيظهر خط مستقيم ميله <code>−0.35/ln 10</code>.</p>',
+bug:r`t = linspace(0, 20, 200);
+A = 1000*e^(-0.35*t);
+subplot(1,2,1); plot(t, A); grid on
+title('Linear axes'); xlabel('t (h)'); ylabel('Activity')
+subplot(1,2,2); semilogy(t, A); grid on
+title('Logarithmic y-axis'); xlabel('t (h)')`,fixFn0:b=>b.replace('e^(-0.35*t)','exp(-0.35*t)'),
+why:'في ماتلاب الدالة الأسية هي <code>exp(-0.35*t)</code>، مش <code>e^(...)</code>.',err:"Unrecognized function or variable 'e'.",
+fixFn:()=>{const t=lin(0,20,200),A=t.map(v=>1000*exp(-0.35*v));return fig([{items:[L(t,A)],grid:1,ttl:'Linear axes',xl:'t (h)',yl:'Activity',xlim:[0,20]},{items:[L(t,A)],grid:1,ttl:'Logarithmic y-axis',xl:'t (h)',log:'y',xlim:[0,20]}],1,2)}};
+E[20]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.4: قوانين القوى على محاور Log-Log',intro:'<p>ارسم <code>y = 5x^−1.5</code> و<code>y = 2x^0.5</code> من 1 إلى 1000 على محاور لوغاريتمية بالكامل باستخدام <code>logspace</code>.</p>',
+bug:r`x = logspace(0, 3, 100);
+loglog(x, 5*x^-1.5, x, 2*x^0.5, 'LineWidth', 1.3)
+grid on; xlabel('x'); ylabel('y')
+legend('5x^{-1.5}', '2x^{0.5}', 'Location', 'northwest')`,fixFn0:b=>b.replace('5*x^-1.5, x, 2*x^0.5','5*x.^-1.5, x, 2*x.^0.5'),
+why:'نسيت النقطة قبل الأس: لازم <code>5*x.^-1.5</code> و<code>2*x.^0.5</code> لأن x متجه.',err:"Incorrect dimensions for raising a matrix to a power. Check that the matrix is square and the power is a scalar. To perform elementwise matrix powers, use '.^'.",
+fixFn:()=>{const x=lin(0,3,100).map(v=>10**v);return fig([{items:[L(x,x.map(v=>5*v**-1.5),'',1.3),L(x,x.map(v=>2*v**0.5),'',1.3)],log:'xy',grid:1,xl:'x',yl:'y',leg:['5x^{-1.5}','2x^{0.5}'],legpos:'nw'}])}};
+E[21]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.5: الأعمدة البيانية (Bar Chart)',intro:'<p>اعرض أعداد الطلاب الحاصلين على A, B, C, D, F وهي <code>(8, 15, 22, 9, 6)</code> كأعمدة مع كتابة الرقم فوق كل عمود.</p>',
+bug:r`n = [8 15 22 9 6];
+bar(n, 'FaceColor', [0.1 0.4 0.7])
+set(gca, 'XTickLabel', ('A','B','C','D','F'))
+ylabel('Number of students'); title('Grade distribution'); grid on
+text(1:5, n + 0.8, string(n), 'HorizontalAlignment', 'center')`,fixFn0:b=>b.replace("('A','B','C','D','F')","{'A','B','C','D','F'}"),
+why:'قائمة النصوص في <code>XTickLabel</code> لازم تكون جوه أقواس مجعدة (Cell Array) <code>{\'A\',\'B\',...}</code> مش أقواس عادية.',err:'Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.',
+fixFn:()=>{const n=[8,15,22,9,6],it=n.map((v,i)=>({t:'r',x0:i+0.6,x1:i+1.4,y0:0,y1:v,f:'#1a66b3'}));n.forEach((v,i)=>it.push({t:'tx',x:i+1,y:v+0.8,s:v}));return fig([{items:it,xlim:[0.4,5.6],ylim:[0,25],xtk:[1,2,3,4,5],xt:['A','B','C','D','F'],grid:1,yl:'Number of students',ttl:'Grade distribution'}])}};
+E[22]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.6: المدرج التكراري (Histogram & sprintf)',intro:'<p>ولّد 5000 قيمة من توزيع طبيعي (متوسط 50، انحراف 8) واعرضها في 30 سلة، واطبع المتوسط والانحراف في العنوان.</p>',
+bug:r`rng(0)
+x = 50 + 8*randn(1, 5000);
+histogram(x, 30)
+xlabel('Value'); ylabel('Frequency')
+title(sprintf('mean = %.2f, std = %.2f', mean(x)))`,fixFn0:b=>b.replace('mean(x)))','mean(x), std(x)))'),
+why:'حجزنا مكانين <code>%.2f</code> في <code>sprintf</code> لكن بعتنا متغير واحد بس <code>mean(x)</code>. مفيش error، لكن العنوان بيتقطع عند المكان التاني. الحل: <code>mean(x), std(x)</code>.',err:'مفيش رسالة خطأ: العنوان بيطلع ناقص (std = ) بس.',
+data(){seed=0;const x=Array.from({length:5000},()=>50+8*randn()),m=x.reduce((a,b)=>a+b)/5000,s=Math.sqrt(x.reduce((a,b)=>a+(b-m)**2,0)/4999),mn=Math.min(...x),mx=Math.max(...x),w=(mx-mn)/30,c=Array(30).fill(0);x.forEach(v=>c[Math.min(29,Math.floor((v-mn)/w))]++);return{m,s,it:c.map((v,i)=>({t:'r',x0:mn+i*w,x1:mn+(i+1)*w,y0:0,y1:v,f:'#0072BD',s:'#fff'}))}},
+fixFn(){const d=this.data();return fig([{items:d.it,xl:'Value',yl:'Frequency',ttl:`mean = ${d.m.toFixed(2)}, std = ${d.s.toFixed(2)}`}])+'<p class="mut">الأعداد من مولّد عشوائي هنا، قريبة من ماتلاب لكن مش مطابقة لـ rng(0) بالظبط.</p>'},
+wrongFn(){const d=this.data();return fig([{items:d.it,xl:'Value',yl:'Frequency',ttl:`mean = ${d.m.toFixed(2)}, std = `}])}};
+E[23]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.7: الوردة القطبية (Polar Rose)',intro:'<p>ارسم <code>r = cos(4θ)</code> في الإحداثيات القطبية: الرقم الزوجي 4 بيدي ضعف العدد، يعني 8 بتلات.</p>',
+bug:r`th = linspace(0, 2*pi, 500);
+polarplot(th, cos(4*th), 'LineWidth', 1.3)
+title(r = cos 4\theta)`,fixFn0:b=>b.replace('title(r = cos 4\\theta)',"title('r = cos 4\\theta')"),
+why:'نسيت علامات التنصيص حوالين نص العنوان: لازم <code>title(\'r = cos 4\\theta\')</code>. ملحوظة: الرسم الكلاسيكي للوردة بيعكس القيم السالبة لـ r، وشكل <code>polarplot</code> عندك ممكن يختلف حسب إعدادات RLim، فراجعه في ماتلاب.',err:'Invalid expression. Check for missing multiplication operator, missing or unbalanced delimiters, or other syntax error.',
+fixFn:()=>{const th=lin(0,2*P,500);return fig([{polar:1,th,r:th.map(t=>cos(4*t)),ttl:'r = cos 4θ'}])}};
+E[24]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.8: أشرطة الخطأ وأفضل خط مستقيم (errorbar و polyfit)',intro:'<p>استطالة زنبرك تحت أحمال 1 إلى 5 نيوتن: <code>[2.1 3.9 6.2 7.8 10.1]</code> سم بعدم يقين ±0.3 سم. ارسم النقاط بأشرطة الخطأ وركّب عليها خط الانحدار بـ <code>polyfit</code> و<code>polyval</code>.</p>',
+bug:r`F = 1:5;
+x = [2.1 3.9 6.2 7.8 10.1];
+errorbar(F, x, 0.3*ones(size(x)), 'ko', 'MarkerFaceColor', 'k');
+p = polyfit(F, x, 1);
+Ff = linspace(0.5, 5.5, 50);
+plot(Ff, polyval(p, Ff), 'r-');
+xlabel('Load F (N)'); ylabel('Extension x (cm)'); grid on
+legend('measured', sprintf('fit: x = %.2fF %+.2f', p(1), p(2)), 'Location', 'northwest')`,fixFn0:b=>b.replace("'MarkerFaceColor', 'k');","'MarkerFaceColor', 'k');\nhold on;"),
+why:'نسيت <code>hold on</code> بعد <code>errorbar</code>، فـ <code>plot</code> مسحت نقاط القياس وأشرطة الخطأ. (والـ <code>%+.2f</code> بتظهر إشارة + أو − أوتوماتيك في المعادلة.)',err:'مفيش error: الرسمة بتطلع بخط الانحدار بس من غير نقاط القياس.',
+fit(){const F=[1,2,3,4,5],x=[2.1,3.9,6.2,7.8,10.1],mf=3,mx=x.reduce((a,b)=>a+b)/5,sl=F.reduce((a,f,i)=>a+(f-mf)*(x[i]-mx),0)/10,ic=mx-sl*mf;return{F,x,sl,ic,Ff:lin(0.5,5.5,50)}},
+fixFn(){const d=this.fit(),lab=`fit: x = ${d.sl.toFixed(2)}F ${d.ic<0?'-':'+'}${Math.abs(d.ic).toFixed(2)}`;return fig([{items:[{t:'e',x:d.F,y:d.x,e:0.3,mk:'o',mf:'#000'},L(d.Ff,d.Ff.map(v=>d.sl*v+d.ic),'r-')],xlim:[0,6],ylim:[0,12],xl:'Load F (N)',yl:'Extension x (cm)',grid:1,leg:['measured',lab],legpos:'nw'}])},
+wrongFn(){const d=this.fit();return fig([{items:[L(d.Ff,d.Ff.map(v=>d.sl*v+d.ic),'r-')],xlim:[0,6],ylim:[0,12],xl:'Load F (N)',yl:'Extension x (cm)',grid:1,leg:['measured'],legpos:'nw'}])}};
+E[25]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.9: محوران رأسيان (yyaxis)',intro:'<p>ارسم درجة الحرارة (°C) والرطوبة النسبية (%) على مدار 24 ساعة في شكل واحد بمحورين رأسيين (يسار ويمين).</p><p class="mut">الكود هنا سليم. السؤال: إيه اللي يحصل لو استبدلنا <code>h = 0:23</code> بـ <code>h = 1:24</code> وسبنا <code>xlim([0 23])</code>؟</p>',
+bug:r`h = 0:23;
+T = 20 + 6*sin((h - 9)*pi/12);
+H = 60 - 15*sin((h - 9)*pi/12);
+yyaxis left;  plot(h, T, '-o'); ylabel('Temperature (\circC)')
+yyaxis right; plot(h, H, '-s'); ylabel('Humidity (%)')
+xlabel('Hour'); xlim([0 23]); grid on
+title('Daily weather record')`,fix:null,sol:true,
+why:'مع <code>h = 1:24</code> نقطة الساعة 24 بتخرج برا <code>xlim([0 23])</code> فبتختفي من الرسم، ونقطة الساعة 0 مش موجودة أصلاً. كمان القيم بتتحسب عند ساعات مختلفة فالمنحنى بيتزحزح ساعة. الحل: خلي <code>h</code> و<code>xlim</code> متوافقين (<code>h = 1:24</code> مع <code>xlim([1 24])</code>).',err:null,
+mk(h,xl){const T=h.map(v=>20+6*sin((v-9)*P/12)),H=h.map(v=>60-15*sin((v-9)*P/12));return fig([{items:[L(h,T,'-o')],yl:'Temperature (\\circC)',xl:'Hour',xlim:xl,grid:1,ttl:'Daily weather record',yy:{items:[L(h,H,'-s')],yl:'Humidity (%)'}}])},
+fixFn(){return this.mk(lin(0,23,24),[0,23])},
+wrongFn(){return this.mk(lin(1,24,24),[0,23])}};
+E[26]={sec:'القسم السادس: أمثلة محلولة',h:'Example 6.10: تظليل المساحة تحت المنحنى (area)',intro:'<p>ارسم <code>y = e^(−x²)</code> على <code>[-3, 3]</code> وظلّل المنطقة بين <code>x = −1</code> و<code>x = 1</code> بأمر <code>area</code>. (المساحة المظللة ≈ 1.4936)</p>',
+bug:r`x = linspace(-3, 3, 300); y = exp(-x^2);
+plot(x, y, 'k', 'LineWidth', 1.3); hold on
+xs = linspace(-1, 1, 100);
+area(xs, exp(-xs.^2), 'FaceColor', [0.6 0.8 1], 'EdgeColor', 'none')
+plot(x, y, 'k', 'LineWidth', 1.3); hold off
+grid on; title('Area under e^{-x^2} between -1 and 1')`,fixFn0:b=>b.replace('exp(-x^2)','exp(-x.^2)'),
+why:'نسيت النقطة في السطر الأول <code>exp(-x.^2)</code> رغم إنك افتكرتها في السطر الرابع <code>exp(-xs.^2)</code>.',err:"Incorrect dimensions for raising a matrix to a power. Check that the matrix is square and the power is a scalar. To perform elementwise matrix powers, use '.^'.",
+fixFn:()=>{const x=lin(-3,3,300),xs=lin(-1,1,100);return fig([{items:[L(x,x.map(v=>exp(-v*v)),'k',1.3),{t:'a',x:xs,y:xs.map(v=>exp(-v*v)),f:'#99ccff'},L(x,x.map(v=>exp(-v*v)),'k',1.3)],grid:1,xlim:[-3,3],ylim:[0,1],ttl:'Area under e^{-x^2} between -1 and 1'}])}};
+Object.values(E).forEach(e=>{if(e.fixFn0&&e.fix===undefined)e.fix=e.fixFn0(e.bug)});
+function exBlock(n,lvl){const e=E[n],id='x'+n;return`<h${lvl}>${e.h}</h${lvl}>${e.intro||''}<div class="bad"><div class="lbl">${e.sol?'الكود (اقرأه كويس):':'كود التحدي (فيه غلطة بيزكس Basics):'}</div>${code(e.bug)}</div>
+<div class="btns"><button onclick="rv('${id}')">${e.sol?'اكشف الإجابة':'اكشف الغلطة والتصحيح'}</button><button class="alt" onclick="rn('${id}',${n})">تشغيل الكود وعرض الرسمة (Run &amp; Plot)</button></div>
+<div id="${id}-r" hidden><div class="box err"><div class="lbl">${e.sol?'الإجابة:':'الغلطة:'}</div><p>${e.why}</p></div>${e.fix?`<div class="box ok"><div class="lbl">الكود السليم:</div>${code(e.fix)}</div>`:''}</div><div id="${id}-p" hidden></div>`}
+const TAG='<span class="tag">المرحلة الثانية: التطبيق العملي</span>';
+function exSlide(n){return TAG+exBlock(n,2)}
+function exSlide2(title,ns){return TAG+`<h2>${title}</h2>`+ns.map(n=>exBlock(n,3)).join('<hr style="border:0;border-top:1px solid #ffffff22;margin:22px 0">')}
+function rv(id){const d=document.getElementById(id+'-r');d.hidden=!d.hidden}
+function rn(id,n){const d=document.getElementById(id+'-p'),e=E[n];if(!d.hidden){d.hidden=true;return}d.hidden=false;const show=w=>{let h='';if(w){if(e.err)h+=`<div class="box err"><div class="lbl">${e.err.startsWith('مفيش')?'ملحوظة:':'الناتج في الـ Command Window:'}</div><p class="errmsg">${esc(e.err).replace(/\n/g,'<br>')}</p></div>`;if(e.wrongFn)h+=e.wrongFn()}else h=e.fixFn();d.querySelector('.out').innerHTML=h};d.innerHTML=`<div class="tabs"><button class="sm on" data-w="0">الكود السليم${e.sol?' (h = 0:23)':''}</button>${(e.err||e.wrongFn)?`<button class="sm" data-w="1">${e.sol?'مع h = 1:24':'الكود الغلط (الأصلي)'}</button>`:''}</div><div class="out"></div><p class="mut" style="font-size:14px">رسمة SVG مولّدة برمجياً بنفس ألوان وخطوط ومحاور الكود. نص رسائل الخطأ تقريبي ويختلف حسب إصدار ماتلاب.</p>`;d.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{d.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));show(+b.dataset.w)});show(0)}
+/* ---------- slides ---------- */
+const S=[];
+S.push(`<div class="cover"><span class="tag">ورشة MATLAB</span><h1>إتقان الرسم ثنائي الأبعاد في MATLAB (2D Plotting)</h1><p class="mut" style="font-size:22px">من الأساسيات إلى الرسوم الهندسية المتقدمة</p><svg viewBox="0 0 640 220" style="max-width:720px;width:100%"><defs><linearGradient id="g1"><stop offset="0" stop-color="#8b7bff"/><stop offset="1" stop-color="#4cc9f0"/></linearGradient></defs><g fill="none" stroke-width="3"><path stroke="url(#g1)" d="${(()=>{let d='';lin(0,2*P,120).forEach((t,i)=>d+=(i?'L':'M')+(20+t/(2*P)*600)+' '+(110-80*sin(2*t)))||0;return d})()}"/><path stroke="#ff5d6c88" d="${(()=>{let d='';lin(0,2*P,120).forEach((t,i)=>d+=(i?'L':'M')+(20+t/(2*P)*600)+' '+(110-60*cos(3*t)*Math.exp(-t/6)))||0;return d})()}"/><path stroke="#3ddc9788" stroke-dasharray="8 6" d="${(()=>{let d='';lin(-1,1,120).forEach((t,i)=>d+=(i?'L':'M')+(320+t*290)+' '+(190-150*t*t))||0;return d})()}"/></g></svg></div>`);
+const T1='<span class="tag">المرحلة الأولى: الفهم النظري وشرح الأوامر</span>';
+const cmd=(c,syn,d)=>`<div class="card"><b class="t"><code>${esc(c)}</code></b><p style="margin:0"><span class="mut">الصيغة:</span> <code>${esc(syn)}</code></p><p>${d}</p></div>`;
+S.push(T1+`<h2>ليه بنعمل Plot أصلاً كمهندسين؟</h2><div class="grid"><div class="card"><b class="t">فهم بصري سريع</b>الرسم بيفهمك النتيجة الهندسية أسرع من قراءة آلاف الأرقام.</div><div class="card"><b class="t">إشارات الجهد والتيار</b>تشوف شكل الـ Sine waves.</div><div class="card"><b class="t">قراءات الحساسات</b>تراقبها وتكتشف القيم الشاذة.</div><div class="card"><b class="t">مقارنة الأنظمة</b>أداء أكتر من نظام على جراف واحد.</div><div class="card"><b class="t">جودة النشر العلمي</b>رسومات Publication-quality بأمر واحد.</div></div>`);
+S.push(T1+`<h2>كيف يرسم الماتلاب؟ والقاعدة الذهبية للمتجهات</h2><ul><li>ماتلاب بياخد متجهين <code>x</code> و<code>y</code> بنفس الطول، يحدد النقط، ويوصل بينها بخطوط مستقيمة.</li><li>كل ما زودت النقط بـ <code>linspace</code> المنحنى بيبقى أنعم.</li></ul><div class="card"><b class="t">جرّب: عدد النقط</b><input type="range" id="np" min="4" max="100" value="8"> <b id="npv" dir="ltr"></b><div id="npf"></div><code>x = linspace(0, 2*pi, n); plot(x, sin(x), '-o')</code></div><div class="box err"><div class="lbl">تحذير: أشهر خطأ</div><p class="errmsg">Error using plot<br>Vectors must be the same length.</p><p>بيحصل لما <code>x</code> و<code>y</code> مش بنفس العدد، أو لما تنسى النقطة فـ <code>y</code> يتحول لرقم واحد (زي القسمة بين متجهين بغير نقطة).</p></div><div class="grid"><div class="card"><b class="t"><code>.*</code></b>ضرب عنصر بعنصر</div><div class="card"><b class="t"><code>./</code></b>قسمة عنصر على عنصر</div><div class="card"><b class="t"><code>.^</code></b>رفع كل عنصر لأس. وغيابها بيدي <code>Incorrect dimensions for raising a matrix to a power</code></div></div>`);
+S.push(T1+`<h2>الأمر الأساسي plot ومحددات الألوان</h2><div class="grid">${cmd('plot(x, y)','plot(x, y)','يرسم y مقابل x. المتجهين بنفس الطول بالظبط.')}${cmd("plot(x, y, 'color')","plot(x, y, 'r')",'المعامل الثالث بيحدد اللون (وبعدين الخط والعلامة).')}</div><table><tr><th>الرمز</th><th>اللون</th></tr><tr><td>'y'</td><td>أصفر</td></tr><tr><td>'m'</td><td>ماجنتا</td></tr><tr><td>'c'</td><td>سيان</td></tr><tr><td>'r'</td><td>أحمر</td></tr><tr><td>'g'</td><td>أخضر</td></tr><tr><td>'b'</td><td>أزرق</td></tr><tr><td>'k'</td><td>أسود (انتبه: الأسود k مش b!)</td></tr></table><p class="mut">لازم تكتب الرمز بين علامات تنصيص <code>'r'</code>.</p>`);
+S.push(T1+`<h2>أشكال الخطوط وعلامات النقط والسمك</h2><p>بتتكتب جنب اللون مباشرة: <code>'r--o'</code> = أحمر + متقطع + دائرة. جرّب:</p><div class="card"><div class="sel" id="s-c"></div><div class="sel" id="s-l"></div><div class="sel" id="s-m"></div><p>الأمر: <code id="s-code"></code></p><div id="s-fig"></div></div><div class="grid"><div class="card"><b class="t">شكل الخط</b><code>'-'</code> متصل، <code>'--'</code> متقطع، <code>':'</code> منقط، <code>'-.'</code> شرطة ونقطة</div><div class="card"><b class="t">علامات النقط (Markers)</b><code>'o'</code> دائرة، <code>'+'</code> زائد، <code>'*'</code> نجمة، <code>'.'</code> نقطة، <code>'s'</code> مربع، <code>'d'</code> معين</div><div class="card"><b class="t">خصائص إضافية (اسم وقيمة)</b><code>'LineWidth'</code> سمك المنحنى، <code>'MarkerSize'</code> حجم العلامة، <code>'MarkerFaceColor'</code> لون تعبئة العلامة.${code("plot(x, y, 'r--o', 'LineWidth', 1.5, 'MarkerSize', 6)")}</div></div><div id="s7"></div>`);
+S.push(T1+`<h2>أوامر عناوين وتنسيق الجراف (Formatting)</h2><div class="grid">${cmd('grid on / grid off','grid on','إظهار أو إخفاء شبكة الرسم.')}${cmd('xlabel / ylabel',"xlabel('t (s)'); ylabel('V (volt)')",'تسمية المحور الأفقي والرأسي. اكتب الوحدات دايماً.')}${cmd('title',"title('My plot', 'FontSize', 14)",'عنوان الرسمة، و<code>FontSize</code> بيكبّر خطه.')}${cmd('text',"text(x, y, 'note')",'بيكتب نص جوه الجراف عند الإحداثيات (x, y). ممكن <code>\'HorizontalAlignment\',\'center\'</code> يوسّط النص، و<code>string(n)</code> بيحوّل الأرقام لنص.')}</div><h3>الرموز اليونانية والرياضية (TeX)</h3><table><tr><th>اكتب</th><th>تظهر</th></tr><tr><td>${'\\pi \\alpha \\omega \\Delta \\theta'}</td><td>π α ω Δ θ</td></tr><tr><td>${'\\circ'}</td><td>° (للدرجات: <code>'(\\circC)'</code>، ولو ماظهرتش صح اكتب <code>\\circ C</code> بمسافة)</td></tr><tr><td>x^2 &nbsp; x^{-1.5}</td><td>الأس (الأقواس { } لأكتر من حرف)</td></tr><tr><td>x_1</td><td>الرمز السفلي</td></tr></table>`);
+S.push(T1+`<h2>التحكم في حدود وأبعاد المحاور</h2><div class="grid">${cmd('xlim / ylim','xlim([a b])','تحديد بداية ونهاية محور واحد بس.')}${cmd('axis','axis([xmin xmax ymin ymax])','حدود المحورين مع بعض في متجه من 4 عناصر (بأقواس مربعة!). مش <code>axis(-2,2,-10,10)</code>.')}${cmd('axis equal','axis equal','مقياس رسم متساوي على المحورين، وضروري عشان الدايرة متتحولش لبيضاوي.')}</div>`);
+S.push(T1+`<h2>رسم أكتر من منحنى على نفس الجراف + legend</h2><div class="grid"><div class="card"><b class="t">1) hold on / hold off</b>ارسم الأول، <code>hold on</code> يثبّته، ارسم التاني، و<code>hold off</code> يلغي التثبيت.${code("plot(x, y1)\nhold on\nplot(x, y2)\nhold off")}</div><div class="card"><b class="t">2) الأسرع: أمر واحد</b>${code("plot(x, y1, 'b-', x, y2, 'r--')")}</div><div class="card"><b class="t">3) مصفوفة</b>كل عمود في <code>Y</code> منحنى.${code("plot(x, Y)")}</div>${cmd('legend',"legend('First', 'Second', 'Location', 'northwest')",'صندوق تعريف المنحنيات بنفس ترتيب الرسم. <code>Location</code> بيحدد مكانه: <code>\'best\'</code> أو <code>\'northwest\'</code> أو <code>\'northeast\'</code>...')}<div class="card"><b class="t">أدوات مساعدة هنستخدمها بعدين</b><code>for j = [1 3 5 7] ... end</code> لوب بيكرر الأمر لكل قيمة في المتجه، و<code>acos(x)</code> هي cos⁻¹.${code("for j = [1 3 5 7]\n    plot(x, cos(j*acos(x)))\nend")}</div></div>`);
+S.push(T1+`<h2>إدارة النوافذ وتقسيم الشاشة (figure و subplot)</h2><div class="grid">${cmd('figure','figure','يفتح نافذة جديدة مستقلة عشان الرسمة الجديدة متمسحش القديمة. (<code>doc figure</code> للمساعدة، و<code>close all</code> يقفل كل النوافذ.)')}${cmd('subplot','subplot(m, n, p)','يقسّم النافذة لشبكة <code>m</code> صفوف و<code>n</code> أعمدة، و<code>p</code> مكان الرسمة الحالية (العد بالصفوف).')}</div><div class="card"><b class="t">شبكة 2×2: ترقيم p</b><table style="max-width:260px"><tr><td>1</td><td>2</td></tr><tr><td>3</td><td>4</td></tr></table>${code("subplot(2,2,3)   % الرسمة في الصف التاني، العمود الأول")}</div>`);
+S.push(T1+`<h2>التعديل بالماوس وحفظ الرسومات وأمر fplot</h2><div class="grid"><div class="card"><b class="t">التعديل بدون كود</b><code>plotedit on</code> أو الضغط على السهم في الشريط العلوي، أو <code>figure('ToolBar','figure')</code>. والأحسن: قائمة <code>View → Property Editor</code> وغيّر الألوان والخطوط والعناوين بالماوس.</div><div class="card"><b class="t">حفظ الرسمة</b>${code("saveas(gcf, 'result.png')\nprint('-dpdf', 'result.pdf')")}<code>gcf</code> = الفيجر الحالي، و<code>gca</code> = المحاور الحالية. و<code>File → Save As</code> بتحفظ <code>.fig</code> قابل للتعديل.</div>${cmd('fplot','fplot(@(x) fun, [a b])','يرسم دالة رياضية مباشرة من غير ما تعمل متجه نقط بنفسك. بيختار النقط أوتوماتيك ويكثفها لما الدالة تتغير بسرعة. جوه الدالة استخدم <code>.*</code> و<code>./</code> و<code>.^</code>.')}</div>`);
+S.push(T1+`<h2>المحاور اللوغاريتمية</h2><div class="grid">${cmd('semilogx','semilogx(x, y)','محور x لوغاريتمي (زي استجابة التردد Bode).')}${cmd('semilogy','semilogy(x, y)','محور y لوغاريتمي، بيحول الأسي لخط مستقيم.')}${cmd('loglog','loglog(x, y)','المحوران لوغاريتميان، بيحول قوانين القوى لخط مستقيم.')}${cmd('logspace','logspace(a, b, n)','n نقطة موزعة لوغاريتمياً من 10^a لـ 10^b.')}</div>`);
+S.push(T1+`<h2>الرسوم الإحصائية والقطبية</h2><div class="grid">${cmd('bar / barh','bar(n)','أعمدة بيانية رأسية (<code>bar</code>) أو أفقية (<code>barh</code>). لون الأعمدة: <code>\'FaceColor\', [r g b]</code>.')}${cmd('XTickLabel',"set(gca, 'XTickLabel', {'A','B','C'})",'تسمية الفئات: القائمة بأقواس مجعدة { } (Cell Array) مش أقواس عادية.')}${cmd('histogram','histogram(x, bins)','مدرج تكراري لتوزيع البيانات في عدد سلال bins.')}${cmd('randn / rng','x = 50 + 8*randn(1, 5000); rng(0)','<code>randn</code> أرقام عشوائية بتوزيع طبيعي (متوسط 0 وانحراف 1)، و<code>rng(0)</code> بيثبّت العشوائية. ومعاها <code>mean(x)</code> و<code>std(x)</code>.')}${cmd('sprintf',"sprintf('mean = %.2f', mean(x))",'بيدمج الأرقام في نص: كل <code>%.2f</code> مكان لرقم (2 أرقام بعد العلامة)، وعدد المتغيرات لازم يساوي عدد الأماكن.')}${cmd('polarplot','polarplot(theta, r)','رسم في الإحداثيات القطبية: الزاوية ونصف القطر.')}</div>`);
+S.push(T1+`<h2>الرسوم الهندسية المتقدمة المستخدمة في التجارب</h2><div class="grid">${cmd('errorbar','errorbar(x, y, err)','نقط القياس مع أشرطة الخطأ. <code>err</code> متجه، أو <code>0.3*ones(size(x))</code> لخطأ ثابت.')}${cmd('polyfit / polyval','p = polyfit(x, y, 1); polyval(p, x)','<code>polyfit</code> بيحسب معاملات أفضل خط مستقيم (Curve fitting)، و<code>polyval</code> بيحسب قيمه. وفي legend: <code>%+.2f</code> بيظهر إشارة + أو −.')}${cmd('yyaxis','yyaxis left / yyaxis right','محورين رأسيين في نفس الجراف لكميتين بوحدتين مختلفتين.')}${cmd('area','area(x, y)','يرسم ويظلل المساحة تحت المنحنى. <code>\'FaceColor\'</code> و<code>\'EdgeColor\'</code> للتحكم في اللون.')}</div><div class="box warn">كده خلصنا كل الأوامر. من الشريحة الجاية بنطبق ونكتشف الأخطاء.</div>`);
+S.push(exSlide(4));S.push(exSlide(11));S.push(exSlide(13));
+S.push(exSlide2('تقسيم الشاشة 2×2 وسؤال امتحان المعمل',[14,15]));
+[17,18,19,20,21,22,23,24].forEach(n=>S.push(exSlide(n)));
+S.push(exSlide2('Example 6.9 و6.10: محورين رأسيين وتظليل المساحة',[25,26]));
+S.push(`<span class="tag">المرحلة الثانية: التطبيق العملي</span><h2>خلاصة الفصل وقواعد الامتحان الذهبية</h2><div class="grid">${['<code>x</code> و<code>y</code> لازم يكونوا بنفس الطول، وزوّد النقط بـ <code>linspace</code> عشان المنحنى يبقى ناعم.','متنساش النقطة <code>.*</code> و<code>./</code> و<code>.^</code> مع المتجهات.','متنساش علامة الضرب <code>*</code> (<code>5*cos</code> مش <code>5cos</code>)، والدالة الأسية <code>exp()</code> مش <code>e^</code>.','محددات اللون والخط بين علامات تنصيص: <code>\'r--o\'</code>، والأسود <code>\'k\'</code>.','رسم أكتر من منحنى: <code>hold on</code> / <code>hold off</code> أو <code>plot(x,y1,x,y2)</code>.','<code>axis([xmin xmax ymin ymax])</code> بمتجه، و<code>axis equal</code> للدايرة.','النصوص في <code>XTickLabel</code> بأقواس مجعدة <code>{ }</code> و<code>sprintf</code> لازم عدد المتغيرات = عدد <code>%</code>.','اختار المحور المناسب: <code>semilogy</code> للأسي، و<code>loglog</code> لقوانين القوى، و<code>yyaxis</code> لوحدتين مختلفتين.'].map((t,i)=>`<div class="card"><b class="t">${i+1}</b>${t}</div>`).join('')}</div><p class="mut">النقاط دي مجمعة من محتوى العرض نفسه.</p>`);
+const PR=[['رسم <code>y = 5cos(3πx)</code> لـ 101 نقطة على <code>0 ≤ x ≤ 1</code>.',"x = linspace(0, 1, 101);\ny = 5*cos(3*pi*x);\nplot(x, y); grid on"],['رسم <code>y = 1/(1+x²)</code> لـ 101 نقطة على <code>−5 ≤ x ≤ 5</code>. ولماذا نحتاج النقط (Dots)؟','x = linspace(-5, 5, 101);\ny = 1./(1+x.^2);   % النقط لأن x متجه والعمليات عنصر عنصر\nplot(x, y); grid on'],['رسم <code>sin x</code> و<code>sin 2x</code> و<code>sin 3x</code> على <code>[0, 2π]</code> بألوان مختلفة و<code>legend</code>.',"x = linspace(0, 2*pi, 200);\nplot(x, sin(x), 'r', x, sin(2*x), 'g', x, sin(3*x), 'b')\nlegend('sin x', 'sin 2x', 'sin 3x'); grid on"],['استخدام <code>subplot</code> لعرض رسم خطي ورسم نصف لوغاريتمي لـ <code>y = e^(2x)</code> جنباً إلى جنب.',"x = linspace(0, 5, 100);\ny = exp(2*x);\nsubplot(1,2,1); plot(x, y); grid on; title('Linear')\nsubplot(1,2,2); semilogy(x, y); grid on; title('Semilog y')"],['حجم القشرة الكروية <code>V = (4/3)π(r₂³ − r₁³)</code> لـ <code>r₁ = 2</code> و<code>r₂ = 3, 4, …, 10</code>.',"r1 = 2; r2 = 3:10;\nV = 4/3*pi*(r2.^3 - r1^3);\nplot(r2, V, '-o'); grid on\nxlabel('r_2'); ylabel('V')"]];
+S.push(`<span class="tag">المرحلة الثانية: التطبيق العملي</span><h2>اختبر نفسك: 5 مسائل تدريبية (Practice 6.10)</h2>${PR.map((p,i)=>`<details><summary>مسألة ${i+1}</summary><p>${p[0]}</p><div class="btns"><button onclick="this.parentNode.nextElementSibling.hidden=!this.parentNode.nextElementSibling.hidden">إظهار الحل</button></div><div hidden class="box ok"><div class="lbl">الحل:</div>${code(p[1])}${i===4?'<p class="mut">القيم: '+[3,4,5,6,7,8,9,10].map(v=>'V('+v+') ≈ '+(4/3*P*(v**3-8)).toFixed(1)).join('، ')+'</p>':''}</div></details>`).join('')}`);
+/* ---------- build & nav ---------- */
+const deck=document.getElementById('deck');S.forEach((h,i)=>{const s=document.createElement('section');s.className='slide';s.innerHTML=h;deck.appendChild(s)});
+const sl=[...deck.children];let cur=0;
+function pf(){const n=+document.getElementById('np').value;document.getElementById('npv').textContent='n = '+n;const x=lin(0,2*P,n);document.getElementById('npf').innerHTML=fig([{items:[L(x,x.map(sin),'-o')],grid:1,xl:'x',yl:'sin(x)',xlim:[0,6.5]}])}
+document.getElementById('np').oninput=pf;pf();
+(function(){const c=Object.keys(CM).concat(['']),l=['-','--',':','-.'],m=['','o','+','*','.','s','d'];let sc='b',sl_='-',sm='o';const mk=(id,arr,get,set)=>{const el=document.getElementById(id);el.innerHTML=(id==='s-c'?'<span>اللون:</span>':id==='s-l'?'<span>الخط:</span>':'<span>العلامة:</span>');arr.forEach(v=>{const b=document.createElement('button');b.className='sm'+(get()===v?' on':'');b.textContent=v||'none';b.onclick=()=>{set(v);up()};el.appendChild(b)})};function up(){mk('s-c',Object.keys(CM),()=>sc,v=>sc=v);mk('s-l',l,()=>sl_,v=>sl_=v);mk('s-m',m,()=>sm,v=>sm=v);const sp=sc+sl_+sm,x=lin(0,2*P,14),it=[L(x,x.map(v=>sin(v)),sp,1.5)];document.getElementById('s-code').textContent="plot(x, y, '"+sp+"')";document.getElementById('s-fig').innerHTML=fig([{items:it,grid:1,xlim:[0,6.5]}])}up()})();
+(function(){const x=lin(0,2*P,20);document.getElementById('s7').innerHTML=fig([{items:[L(x,x.map(v=>sin(v)),'r--o',1.5)],ttl:' Thick Red Curve ',tfs:14,grid:1,xlim:[0,6.5]}])})();
+function go(n){cur=Math.max(0,Math.min(sl.length-1,n));sl.forEach((s,i)=>s.classList.toggle('on',i===cur));sl[cur].scrollTop=0;document.getElementById('ct').textContent=(cur+1)+' / '+sl.length;document.querySelector('#pg i').style.width=((cur+1)/sl.length*100)+'%'}
+document.getElementById('nx').onclick=()=>go(cur+1);document.getElementById('pv').onclick=()=>go(cur-1);
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key;if(k==='ArrowLeft'||k==='PageDown'){go(cur+1)}else if(k==='ArrowRight'||k==='PageUp'){go(cur-1)}else if(k==='Home')go(0);else if(k==='End')go(sl.length-1)});
+go(0);
+</script></body></html>
