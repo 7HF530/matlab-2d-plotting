@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>أساسيات الماتلاب (الجزء 1): M-files والإدخال والمنطق والشروط</title>
+<style>
+:root{--bg1:#07070d;--bg2:#12102b;--card:#171a33;--ink:#e9ecff;--mut:#9aa3c7;--ac:#8b7bff;--ac2:#4cc9f0;--red:#ff5d6c;--grn:#3ddc97;--cb:#0b0e1c;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 700px at 80% -10%,#2a1f6b 0%,transparent 60%),linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ink);font-family:"Cairo","Segoe UI",Tahoma,Arial,sans-serif;font-size:18px;line-height:1.7;overflow:hidden}
+#pg{position:fixed;top:0;left:0;right:0;height:4px;background:#ffffff14;z-index:5}#pg i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+#deck{position:absolute;inset:4px 0 58px 0}
+.slide{display:none;height:100%;overflow:auto;padding:26px min(6vw,72px) 40px}
+.slide.on{display:block}
+.tag{display:inline-block;font-size:14px;font-weight:700;color:var(--ac2);background:#4cc9f01a;border-radius:20px;padding:2px 14px;margin-bottom:8px;margin-inline-end:8px}
+.num{color:var(--mut);font-size:14px}
+h2{font-size:clamp(26px,3.4vw,40px);line-height:1.3;margin-bottom:12px;background:linear-gradient(90deg,#fff,var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+li{margin:5px 18px 5px 0}
+code{font-family:Consolas,"Courier New",monospace;direction:ltr;unicode-bidi:isolate;background:#ffffff14;border-radius:6px;padding:1px 7px;font-size:.92em;color:#ffd479}
+pre{font-family:Consolas,"Courier New",monospace;direction:ltr;unicode-bidi:isolate;background:var(--cb);border:1px solid #ffffff18;border-radius:14px;padding:14px 18px;font-size:16px;line-height:1.55;text-align:left;overflow:auto;white-space:pre;margin:8px 0}
+pre i{font-style:normal}.c{color:#6c7a9c}.s{color:#9ece6a}.k{color:#bb9af7}.n{color:#ff9e64}
+.lbl{font-weight:700;font-size:16px;margin-top:12px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;align-items:start}
+.card{background:var(--card);border:1px solid #ffffff14;border-radius:18px;padding:14px 20px}
+.card.bad{border-color:#ff5d6c55}
+.card h3{font-size:18px;color:var(--ac2);margin-bottom:4px}.card.bad h3{color:var(--red)}
+button{font-family:inherit;font-size:16px;font-weight:700;border:0;border-radius:12px;padding:9px 20px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#6b5bff,#9b5cff);margin:10px 0}
+.box{border-radius:14px;padding:10px 18px;margin:10px 0}
+.err{background:#ff5d6c1a;border:1px solid #ff5d6c66}.err .lbl{color:var(--red);margin:0}
+.ok{background:#3ddc971a;border:1px solid #3ddc9766}.ok .lbl{color:var(--grn);margin:0}
+.mut{color:var(--mut)}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:16px}th,td{border:1px solid #ffffff1c;padding:5px 12px;text-align:center}th{background:#ffffff10;color:var(--ac2)}td:first-child{direction:ltr}
+.notes{border-color:#8b7bff66;margin-top:14px}.notes button{margin:0 0 6px}
+#sig{position:fixed;left:14px;bottom:66px;z-index:4;font:12px Arial,sans-serif;color:var(--mut);direction:ltr;opacity:.85;pointer-events:none}
+#bar{position:fixed;inset:auto 0 0 0;height:58px;padding-bottom:env(safe-area-inset-bottom,0px);display:flex;gap:14px;align-items:center;justify-content:center;background:#0b0b16f0;border-top:1px solid #ffffff18;z-index:5}
+#bar button{margin:0}#bar span{color:var(--mut);min-width:70px;text-align:center;direction:ltr}
+</style></head><body>
+<div id="pg"><i></i></div><div id="deck"></div><div id="sig">Eng: Hassan Farid</div>
+<div id="bar"><button id="nx">التالي ›</button><span id="ct"></span><button id="pv">‹ السابق</button></div>
+<script>
+const r=String.raw;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const hl=c=>esc(c).replace(/(%.*$)|('[^'\n]*')|\b(if|else|elseif|switch|case|otherwise|while|for|end|break|function|true|false)\b|(\b\d+(?:\.\d+)?\b)/gm,(m,a,b,k,n)=>a?`<i class=c>${a}</i>`:b?`<i class=s>${b}</i>`:k?`<i class=k>${k}</i>`:`<i class=n>${n}</i>`);
+const code=c=>`<pre dir="ltr">${hl(c)}</pre>`;
+const SECN=['القسم الأول: M-Files وأساسيات الإدخال والإخراج','القسم الثاني: العوامل العلائقية والمنطقية','القسم الثالث: الجمل الشرطية','القسم الرابع: الحلقات (Loops)','القسم الخامس: أمثلة محلولة وتمارين'];
+const L=(t,pts,c,n,x)=>({k:'l',t,pts,c,n,x});
+const C=(t,idea,bug,why,fix,n)=>({k:'c',t,idea,bug,why,fix,n});
+const X=(t,q,a,ac,n,qc)=>({k:'x',t,q,a,ac,n,qc});
+const tb=(h,rows)=>`<table><tr>${h.map(x=>'<th>'+x+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')}</table>`;
+const S1=[
+L('خريطة الجزء الأول: من الـ M-file لحد الشروط',['<b>القسم 1:</b> الـ M-files والإدخال والإخراج.','<b>القسم 2:</b> العوامل العلائقية والمنطقية.','<b>القسم 3:</b> الجمل الشرطية <code>if</code> و<code>switch</code> والفهرسة المنطقية.','<b>القسم 4:</b> الحلقات <code>for</code> و<code>while</code>. (في الجزء التاني).','<b>القسم 5:</b> أمثلة محلولة: فيبوناتشي والأعداد الأولية والتنصيف والترتيب. (في الجزء التاني).'],r`clc; clear;
+x = input('Enter x: ');
+if x > 0
+    fprintf('%.1f is positive\n', x);
+end`,'ابدأ بسؤال: مين كتب كود طويل في الـ Command Window وضاع منه؟ وضّح إن الرحلة كلها بتتبني على فكرة: الكود بياخد قرار ويكرر.'),
+L('السكريبت مقابل الدالة (Script vs Function)',['<b>السكريبت</b>: أوامر ورا بعض بتشتغل على متغيرات الـ Workspace، وبتشغّله باسمه.','<b>الدالة</b>: بتاخد مدخلات وترجّع مخرجات، ومتغيراتها <b>محلية</b> (Local).','السكريبت بيحل مشكلة متكاملة، والدالة أداة صغيرة بتستخدمها كتير.'],r`% lab1.m  (سكريبت)
+R = 5;
+A = pi*R^2
+
+% circle_area.m  (دالة)
+function A = circle_area(R)
+    A = pi*R^2;
+end`,'ركّز إن الدالة مبتشوفش متغيرات الـ Workspace ولا بتسيّب متغيراتها فيه. اطلب منهم يتوقعوا إيه هيحصل لو غيّروا R جوه الدالة.'),
+L('تشريح ملف الدالة',['السطر الأول: <code>function [المخرجات] = الاسم(المدخلات)</code>.','اسم الملف لازم يطابق اسم الدالة: <code>sumprod.m</code>.','لازم تدّي قيمة لكل مخرج قبل ما الدالة تخلص.','التعليق اللي تحت السطر الأول بيظهر مع <code>help sumprod</code>.'],r`function [s, p] = sumprod(a, b)
+% SUMPROD returns the sum and product of a and b
+    s = a + b;
+    p = a * b;
+end
+
+% الاستدعاء:
+[s, p] = sumprod(3, 4)     % s = 7 , p = 12`,'اعرض خطأ شائع: ملف اسمه ahmed.m وفيه دالة اسمها test. ماتلاب بيستخدم اسم الملف.'),
+L('تنضيف البيئة: clc و clear',['<code>clc</code> بيمسح شاشة الـ Command Window بس.','<code>clear</code> بيمسح كل المتغيرات من الذاكرة، و<code>clear x</code> بيمسح x بس.','<code>close all</code> بيقفل كل نوافذ الرسم.','اكتبهم في أول سطور أي سكريبت.'],r`clc          % امسح الشاشة
+clear        % امسح كل المتغيرات
+close all    % اقفل النوافذ
+R = 5;
+A = pi*R^2`,'اربطها بتجربة معمل: لو نسيت clear ممكن تستخدم قيمة قديمة من تجربة سابقة بصمت.'),
+L('أخذ بيانات من المستخدم: input للأرقام',['<code>input</code> بيعرض رسالة وبيستنى المستخدم يكتب رقم.','لازم الناتج يتخزن في متغير على <b>الشمال</b> من علامة <code>=</code>.','المستخدم ممكن يكتب متجه زي <code>[1 2 3]</code>.'],r`I = input('Enter Current (A): ');
+V = input('Enter Voltage (V): ');
+R = V/I
+v = input('Enter vector: ');    % اكتب [1 2 3]`,'خلّي طالب يشغل الكود ويجرب يكتب متجه بدل رقم عشان يشوفوا إن input بتقبل تعبيرات ماتلاب.'),
+L('أخذ نصوص: input مع \'s\'',['لو عايز نص (اسم، اختيار) ضيف <code>\'s\'</code> كمعامل تاني.','من غير <code>\'s\'</code> ماتلاب بيحاول يفهم اللي اتكتب كتعبير رياضي.','حتى الرقم مع <code>\'s\'</code> بيتخزن كنص: حوّله بـ <code>str2double</code>.','قارن النصوص بـ <code>strcmp</code> مش <code>==</code>.'],r`name = input('Name: ', 's');
+x = str2double(input('Number: ', 's'));
+ans1 = input('Continue (yes/no)? ', 's');
+if strcmp(ans1, 'yes')
+    disp('OK')
+end`,'اسأل: ليه strcmp مش ==؟ (لأن == بيقارن حرف حرف وبيفشل لو الطول مختلف).'),
+L('عرض النتائج: disp',['<code>disp</code> بيعرض قيمة أو نص بسرعة.','مفيش تحكم في عدد الأرقام العشرية.','لدمج نص مع رقم استخدم <code>[ ]</code> مع <code>num2str</code>.'],r`x = 25;
+disp(x)             % 25
+disp('Hello')       % Hello
+disp([1 2 3])       % 1 2 3
+disp(pi)            % 3.1416`,'وضّح إن disp مناسب للمراجعة السريعة، لكن التقارير الهندسية محتاجة fprintf.'),
+L('الطباعة المنسقة: fprintf',['<code>%d</code> عدد صحيح، <code>%f</code> رقم كسري، <code>%.2f</code> رقمين بعد العلامة، <code>%s</code> نص.','<code>\\n</code> سطر جديد، و<code>\\t</code> مسافة Tab.','كل علامة <code>%</code> مكانها متغير بالترتيب.','لو بعت متجه، الفورمات بتتكرر على كل عناصره.'],r`V = 12.5; I = 0.25;
+fprintf('V = %.1f V, I = %.2f A\n', V, I);   % V = 12.5 V, I = 0.25 A
+fprintf('Name: %s\n', 'Ali');                  % Name: Ali
+fprintf('%d ', [1 2 3]); fprintf('\n');        % 1 2 3`,'اعرض الفرق بين %f (6 أرقام) و%.2f. وأكد إن fprintf مبتنزلش سطر جديد لوحدها.'),
+L('دمج الأرقام بالنصوص: num2str',['<code>num2str</code> بتحوّل رقم لنص.','<code>num2str(x, n)</code> بتحدد عدد الأرقام المعنوية.','الأقواس <code>[ ]</code> بتلزق النصوص جنب بعض.'],r`num2str(pi)            % '3.1416'
+num2str(pi, 8)         % '3.1415927'
+P = 25;
+disp(['P = ', num2str(P), ' W'])     % P = 25 W
+title(['Max = ', num2str(50)])`,'نبّه: ' + "'a' + 5" + ' بتجمع رياضياً ومش بتلزق نص. لازم num2str.'),
+X('تمرين 1: برنامج التيار والقدرة','اكتب سكريبت يطلب من المستخدم الجهد V والمقاومة R، ويحسب التيار والقدرة، ويطبعهم بدقة رقمين عشريين.','لو V = 12 و R = 4 هيطبع <code>I = 3.00 A, P = 36.00 W</code>.',r`clc; clear;
+V = input('Voltage (V): ');
+R = input('Resistance (ohm): ');
+I = V/R;
+P = V*I;
+fprintf('I = %.2f A, P = %.2f W\n', I, P);`,'سيبهم يحلوا 3 دقايق قبل ما تدوس إظهار الحل، وراجع إن clc و clear في الأول.')
+];
+const S2=[
+L('العوامل العلائقية (Relational Operators)',['<code>&gt;</code> <code>&lt;</code> <code>&gt;=</code> <code>&lt;=</code> <code>==</code> و"لا يساوي" هي <code>~=</code> (مش <code>!=</code>).','النتيجة <code>1</code> (True) أو <code>0</code> (False) من نوع <b>logical</b>.','على المتجهات بتشتغل عنصر عنصر.'],r`x = 7;
+x > 5      % 1
+x < 5      % 0
+x >= 7     % 1
+x ~= 7     % 0
+[1 5 9] > 4          % 0 1 1
+class(x > 5)         % 'logical'`,'اسأل: إيه الفرق بين 0 المنطقية و0 العادية؟ وأكد إن النتايج بتتحط في if مباشرة.'),
+C('خطأ شائع: = مقابل ==','<code>=</code> للتخصيص (حط القيمة)، و<code>==</code> للمقارنة (اسأل: متساويين؟).',r`V = 220;
+if V = 220
+    disp('Normal voltage')
+end`,'استخدام <code>=</code> جوه <code>if</code> بيوقف الكود: <code>Incorrect use of \'=\' operator. To assign a value to a variable, use \'=\'. To compare values for equality, use \'==\'.</code>',r`V = 220;
+if V == 220
+    disp('Normal voltage')
+end`,'أكتر غلطة في أول معمل. خلّيهم يقرأوا رسالة الخطأ بصوت عالي.'),
+L('العوامل المنطقية: & و | و ~',['<code>&</code> (AND): الاتنين لازم يتحققوا.','<code>|</code> (OR): واحد على الأقل يتحقق.','<code>~</code> (NOT): بيعكس. و<code>xor(a,b)</code> صح لو واحد بس صح.','بتشتغل على المتجهات عنصر عنصر.'],r`x = 15;
+(x > 10) & (x < 20)     % 1
+(x < 10) | (x > 12)     % 1
+~(x > 10)               % 0
+xor(true, true)         % 0
+v = [5 12 20];
+(v > 10) & (v < 18)     % 0 1 0`,'ارسم جدول الحقيقة على السبورة (4 صفوف) وخلّيهم يتوقعوا قبل ما تشغل الكود.'),
+L('عوامل الاختصار: && و || ومتى نستخدمها',['<code>&&</code> و<code>||</code> للقيم <b>المفردة</b> بس، وبيوقفوا أول ما النتيجة تتحسم (Short-circuit).','ده بيحمي الكود: الشرط التاني مبيتحسبش لو الأول حسم النتيجة.','مع المصفوفات استخدم <code>&</code> و<code>|</code> (أو <code>all</code> و<code>any</code>).'],r`v = [];
+if ~isempty(v) && v(1) > 0     % مفيش error: v(1) مبتتحسبش
+    disp('First is positive')
+end
+b = 0; a = 10;
+if b ~= 0 && a/b > 2
+    disp('Ratio > 2')
+end`,'وضّح إن && مع متجه بتدي error: Operands to the || and && operators must be convertible to logical scalar values.'),
+L('ترتيب العمليات (Precedence)',['الأقواس، ثم القوى، ثم <code>~</code>، ثم <code>* /</code>، ثم <code>+ -</code>.','بعدها المقارنات <code>&lt; &gt; == ~=</code>.','بعدها <code>&</code>، وبعدها <code>|</code> (يعني <code>&</code> أقوى من <code>|</code>).','يعني: حساب ← مقارنة ← منطق. عند الشك استخدم الأقواس.'],r`3 + 4 < 2 * 5 & 7 > 6    % 1   (7<10) & (7>6)
+1 | 0 & 0                    % 1   لأن 0&0 الأول
+(1 | 0) & 0                  % 0
+~(3 > 2) | (5 == 5) & (1 < 0)  % 0`,'خلّيهم يتدربوا يضيفوا الأقواس بإيديهم على التعبير الأخير خطوة بخطوة.'),
+C('خطأ شائع: المقارنة المتسلسلة','في الرياضيات بنكتب <code>10 &lt; x &lt; 20</code>، لكن في الماتلاب لازم نقسمها لشرطين.',r`x = 5;
+if 10 < x < 20
+    disp('x is between 10 and 20')
+end`,'مفيش error لكن الشرط <b>دايماً صح</b>: <code>(10 &lt; x)</code> بتطلع 0 أو 1، وبعدين بتتقارن بـ 20، و<code>0 &lt; 20</code> صح. فـ x = 5 هيطبع الرسالة غلط.',r`x = 5;
+if x > 10 & x < 20
+    disp('x is between 10 and 20')
+end`,'غلطة صامتة، وده أخطر من اللي بيطلع error. شغّل الكود قدامهم بـ x = 5.'),
+X('تمرين 2: احسب في دماغك','احسب نتيجة كل تعبير (0 أو 1):<br>أ) <code>~(3 > 2) | (5 == 5) &amp; (1 &lt; 0)</code><br>ب) <code>5 &gt; 3 &amp; 2 &gt; 4 | 1</code><br>ج) <code>xor(1, 1) | ~0</code>','أ) <b>0</b>: <code>(5==5)&amp;(1&lt;0)</code> = 0 والأولى 0.<br>ب) <b>1</b>: <code>(5&gt;3 &amp; 2&gt;4)</code> = 0، ثم <code>0 | 1</code> = 1.<br>ج) <b>1</b>: <code>xor(1,1)</code> = 0 و<code>~0</code> = 1.',r`~(3 > 2) | (5 == 5) & (1 < 0)   % 0
+5 > 3 & 2 > 4 | 1                % 1
+xor(1, 1) | ~0                   % 1`,'خلّيهم يكتبوا الأقواس الكاملة قبل الحل. اللي غلط غالباً نسي إن & أقوى من |.')
+];
+const S3=[
+L('قاعدة if و else',['<code>if</code> بتنفذ الأوامر لو الشرط اتحقق، و<code>end</code> بتقفلها.','<code>else</code> مسار بديل وبتتكتب لوحدها من غير شرط.','قرار بمسار واحد (<code>if</code>) أو اتنين (<code>if-else</code>).'],r`mark = input('Mark: ');
+if mark >= 50
+    disp('Pass')
+else
+    disp('Fail')
+end`,'نبّه إن الإزاحة (Indentation) مش إجبارية لكنها بتفرق في القراءة. استخدم Ctrl+I في المحرر.'),
+L('قاعدة if-elseif-else: أول شرط صحيح بس',['للمسارات المتعددة.','الماتلاب بيجرّب الشروط بالترتيب وبينفذ <b>أول</b> شرط صحيح فقط ويتخطى الباقي.','<code>else</code> الأخيرة اختيارية وبتصطاد باقي الحالات.'],r`mark = 90;
+if mark >= 85
+    disp('A')            % دي اللي هتتنفذ
+elseif mark >= 65
+    disp('B')            % حتى لو 90 >= 65 صح، مش هتتنفذ
+else
+    disp('C')
+end`,'أكّد النقطة: 90 بيحقق شرطين لكن بينفذ واحد بس. ده أساس الغلطة اللي بعدها.'),
+C('خطأ شائع: ترتيب الشروط','لازم نرتب الشروط من الأكبر للأصغر (أو من الأضيق للأوسع).',r`mark = 90;
+if mark >= 50
+    disp('C')
+elseif mark >= 85
+    disp('A')
+end`,'الدرجة 90 بتحقق <code>mark &gt;= 50</code> فيطبع <b>C</b> ويخرج، ومش هيوصل لشرط الـ A.',r`mark = 90;
+if mark >= 85
+    disp('A')
+elseif mark >= 50
+    disp('C')
+end`,'اسألهم: لو الدرجة 60 هيطبع إيه في الكود الغلط؟ (C) وفي الصح؟ (C).'),
+L('جملة switch: الشكل العام',['بديل أنظف لـ <code>if</code> لما تقارن متغير بقيم محددة.','<code>case</code> لكل قيمة، و<code>otherwise</code> لباقي الحالات.','<code>case {2, 3}</code> لأكتر من قيمة في نفس الـ case.'],r`day = 6;
+switch day
+    case 1
+        disp('Sunday')
+    case {6, 7}
+        disp('Weekend')
+    otherwise
+        disp('Working day')
+end`,'وضّح إن الجمعة والسبت (6 و7) أمثلة قريبة منهم. اسألهم يضيفوا case للخميس.'),
+L('switch مقابل if: الفرق الجوهري',['<code>switch</code> بتقارن بالمساواة فقط، ومبتقبلش مدى (أكبر/أصغر).','<b>مفيش Fall-through</b>: بعد ما تنفذ case واحد الماتلاب بيخرج من الـ switch لوحده.','لهذا مفيش حاجة اسمها <code>break</code> هنا.','للمدى استخدم <code>if-elseif</code>.'],r`% مدى → if
+if T > 50
+    disp('Hot')
+elseif T > 20
+    disp('Warm')
+else
+    disp('Cold')
+end
+% قيم محددة → switch
+switch mode
+    case 1, disp('Manual')
+    case 2, disp('Auto')
+end`,'سؤال للقاعة: هل ينفع switch لتصنيف الدرجات؟ (بالحيلة floor(mark/10) آه، لكن if أوضح).'),
+C('خطأ شائع: break في switch','في C++ بنكتب <code>break</code> بعد كل case. في الماتلاب مفيش داعي.',r`choice = 1;
+switch choice
+    case 1
+        disp('One')
+        break
+    case 2
+        disp('Two')
+end`,'الـ <code>switch</code> بتخرج لوحدها، و<code>break</code> مخصصة لحلقات <code>for</code> و<code>while</code>. وأخطر من كده: لو الـ switch جوه لوب، الـ <code>break</code> هتطلعك من اللوب كله!',r`choice = 1;
+switch choice
+    case 1
+        disp('One')
+    case 2
+        disp('Two')
+end`,'لو الطلاب جايين من C/Java ده أكتر سؤال هيتسألوه. الرسالة اللي بتظهر لو break برا لوب راجعها في إصدارك.'),
+L('switch مع النصوص',['الـ <code>switch</code> بتقارن النصوص مباشرة.','<code>lower</code> بتحوّل لحروف صغيرة عشان نتجاهل الفرق بين Cm و cm.','<code>otherwise</code> مع <code>error</code> بتصطاد القيم الغلط.'],r`unit = 'cm';
+switch lower(unit)
+    case 'cm'
+        f = 0.01;
+    case {'m', 'meter'}
+        f = 1;
+    otherwise
+        error('Unknown unit');
+end
+fprintf('Factor = %g\n', f);     % Factor = 0.01`,'اربطها بتحويل الوحدات في الهندسة. اسأل: إيه اللي يحصل لو المستخدم كتب mm؟'),
+L('الفهرسة المنطقية والأقنعة (Logical Masks)',['الشرط على متجه بيطلع متجه من 0 و1 اسمه <b>قناع (Mask)</b>.','بنحط القناع جوه الأقواس لنقرأ أو نعدّل العناصر اللي حققت الشرط، من غير حلقة.','<code>T(T&lt;0) = 0</code> بتصفّر كل السالب في سطر.'],r`T = [21 -5 85 22 -40];
+mask = T < 0         % 0 1 0 0 1
+T(mask) = 0          % 21 0 85 22 0
+bad = T(T > 60)      % 85`,'ده أهم سطر في الجزء ده. خلّيهم يكتبوه بإيديهم 3 مرات بأمثلة مختلفة.'),
+C('خطأ شائع: if مع المتجهات','<code>if</code> مصممة للقيم المفردة. مع متجه بتتحقق بس لو <b>كل</b> العناصر حققت الشرط.',r`t = [-1 0 1];
+y = t;
+if t < 0
+    y = 0;
+end
+disp(y)      % المتوقع [0 0 1]`,'الشرط <code>t &lt; 0</code> بيطلع <code>[1 0 0]</code> والـ if مبتتحققش إلا لو كلها 1، فالكود جواها مبيتنفذش و<code>y</code> فضل <code>[-1 0 1]</code>.',r`t = [-1 0 1];
+y = t;
+y(t < 0) = 0;
+disp(y)      % 0 0 1`,'اعرض النتيجة الغلط الأول وسيبهم يعرفوا ليه. وبعدين ارجع لموضوع الأقنعة.'),
+L('دالة البحث find',['<code>find</code> بترجّع <b>أماكن</b> (Indices) العناصر اللي حققت الشرط، مش قيمها.','لو مفيش عنصر بيرجّع متجه فاضي، اختبره بـ <code>isempty</code>.','<code>find(cond, 1)</code> بترجّع أول مكان بس.'],r`V = [4 9 -3 7 -8];
+idx = find(V < 0)        % 3 5
+V(idx)                   % -3 -8
+first = find(V < 0, 1)   % 3
+find(V > 100)            % [] (فاضي)`,'الغلطة التقليدية: الطالب بيتوقع find ترجع القيمة. كرر: مكان، مش قيمة.'),
+L('مثال 1: حاسبة السنة الكبيسة',['السنة كبيسة لو بتقبل القسمة على 4 ومش على 100، إلا لو بتقبل القسمة على 400.','بنجمع الشروط في سطر واحد بـ <code>&&</code> و<code>||</code>.','2000 كبيسة، 1900 لا، 2024 كبيسة، 2023 لا.'],r`y = input('Year: ');
+if (mod(y,4) == 0 && mod(y,100) ~= 0) || mod(y,400) == 0
+    fprintf('%d is a leap year\n', y);
+else
+    fprintf('%d is not a leap year\n', y);
+end`,'جرّب 1900 و2000 قدامهم. الكود المتداخل بيغلط في 2000، ودي فرصة تتكلم عن اختبار الحالات الحدية.'),
+L('مثال 2: شرائح الضرايب (للتوضيح)',['الشرائح والنسب هنا مثال توضيحي بس، مش قانون ضرايب حقيقي.','نرتب الشروط من الأصغر للأكبر، وكل شريحة بتبدأ من حد اللي قبلها.','الضريبة متصلة: عند 30000 هتطلع 1500 من الشريحتين.'],r`I = input('Income: ');
+if I <= 15000
+    tax = 0;
+elseif I <= 30000
+    tax = 0.10 * (I - 15000);
+elseif I <= 45000
+    tax = 1500 + 0.20 * (I - 30000);
+else
+    tax = 4500 + 0.30 * (I - 45000);
+end
+fprintf('Tax = %.2f\n', tax);`,'جرّب 10000 (صفر) و40000 (3500) و50000 (6000). واسألهم يتأكدوا من الاتصال عند الحدود.'),
+L('مثال 3: آلة حاسبة بالعمليات الأربع',['بنستقبل رقمين وعلامة العملية كنص.','<code>switch</code> بتختار العملية، و<code>case \'/\'</code> بتحمي من القسمة على صفر.','<code>%g</code> بتطبع الرقم بأقصر شكل.'],r`a = input('First number: ');
+b = input('Second number: ');
+op = input('Operation (+ - * /): ', 's');
+switch op
+    case '+'
+        r = a + b;
+    case '-'
+        r = a - b;
+    case '*'
+        r = a * b;
+    case '/'
+        if b == 0
+            error('Division by zero');
+        end
+        r = a / b;
+    otherwise
+        error('Unknown operation');
+end
+fprintf('Result = %g\n', r);`,'اطلب منهم يضيفوا الأس ^ كتمرين. وارجع لفكرة التحقق من المدخلات.'),
+X('تمرين 3: نوع المثلث','اكتب كود يستقبل ثلاثة أضلاع a و b و c ويطبع: Equilateral (متساوي الأضلاع) أو Isosceles (متساوي الساقين) أو Scalene (مختلف الأضلاع).','بنختبر المتساوي الأضلاع الأول لأنه حالة خاصة من متساوي الساقين (ترتيب الشروط!).',r`if a == b && b == c
+    disp('Equilateral');
+elseif a == b || b == c || a == c
+    disp('Isosceles');
+else
+    disp('Scalene');
+end`,'اسأل ليه الترتيب مهم؟ لو قلبنا الأول والتاني هيبقى كل متساوي أضلاع متساوي ساقين.')
+];
+const S4=[
+L('ليه نحتاج الحلقات؟',['لتكرار نفس العملية بدل ما ننسخ السطر عشرات المرات.','لما عدد التكرارات يتغير أو مش معروف مسبقاً.','أي عملية على كل عنصر في مجموعة بيانات.'],r`% من غير حلقة (تكرار مملّ)
+disp(1); disp(2); disp(3); disp(4); disp(5);
+
+% بحلقة (سطرين)
+for k = 1:5
+    disp(k)
+end`,'اسأل: لو عايزين نطبع لحد 1000 هنعمل إيه؟ ده يبرر الحلقة.'),
+L('حلقة for: الصيغة والآلية',['<code>for k = بداية:نهاية</code> العداد <code>k</code> بياخد قيمة جديدة كل لفة.','العداد بيحتفظ بآخر قيمة بعد انتهاء الحلقة.','الخطوة: <code>10:-2:2</code> تنازلي بخطوة 2.','عدد اللفات = عدد عناصر المتجه.'],r`for k = 1:5
+    fprintf('k = %d\n', k);
+end
+disp(k)                % 5   (آخر قيمة)
+
+for k = 10:-2:2
+    fprintf('%d ', k);
+end                    % 10 8 6 4 2`,'ارسم على السبورة جدول يوضح قيمة k في كل لفة. ده بيربط الفكرة بمصطلح التتبع (Tracing).'),
+L('حلقة for على متجه محدد',['العداد ممكن يمر على أي متجه، مش لازم يكون مدى منتظم.','مثال: القيم <code>[3 9 27]</code>.','لو عدّيت على مصفوفة، العداد بياخد <b>عمود</b> في كل لفة.'],r`for v = [3 9 27]
+    fprintf('%d squared = %d\n', v, v^2);
+end
+% 3 squared = 9
+% 9 squared = 81
+% 27 squared = 729
+
+for col = [1 2; 3 4]
+    disp(col')
+end                     % 1 3  ثم  2 4`,'نبّه على فكرة العمود لأنها مفاجأة لمبرمجي لغات تانية.'),
+L('التجميع داخل حلقة for (Accumulator)',['بنبدأ متغير تجميع قبل الحلقة (<code>s = 0</code>).','كل لفة بنضيف عليه: <code>s = s + k</code>.','مثال: <code>1+2+...+100 = 5050</code>، ومتسلسلة <code>1/k²</code>.'],r`s = 0;
+for k = 1:100
+    s = s + k;
+end
+disp(s)                 % 5050
+
+s = 0;
+for k = 1:1000
+    s = s + 1/k^2;
+end
+fprintf('%.4f\n', s);   % 1.6439  (قريب من pi^2/6 = 1.6449)`,'اسأل: ليه بنبدأ s بصفر؟ وإيه اللي يحصل لو نسيناه؟ (بياخد قيمة قديمة من الذاكرة).'),
+L('المضروب بدون دالة جاهزة',['المضروب <code>n! = 1×2×...×n</code>.','متغير تجميع بيتضرب: بنبدأه بـ <b>1</b> مش 0.','بنتحقق بدالة <code>factorial(n)</code>.'],r`n = 5;
+f = 1;
+for k = 2:n
+    f = f * k;
+end
+disp(f)                    % 120
+disp(factorial(n))         % 120  (للتأكد)`,'نفّذ الكود على السبورة مع الجدول: k=2→2، k=3→6، k=4→24، k=5→120.',tb(['k','f قبل','f بعد'],[[2,1,2],[3,2,6],[4,6,24],[5,24,120]])),
+L('حلقة while: الصيغة والشروط الثلاثة',['بتكرر طالما الشرط صحيح.','ثلاث حاجات ضرورية: <b>1) تهيئة</b> المتغير، <b>2) اختبار</b> الشرط، <b>3) تحديث</b> المتغير جوه الحلقة.','مناسبة لما عدد التكرارات مش معروف مسبقاً.'],r`x = 1;                  % 1) تهيئة
+while x < 100           % 2) اختبار
+    x = x * 3;          % 3) تحديث
+end
+disp(x)                 % 243   (1→3→9→27→81→243)`,'اسأل: مين الفرق بين for و while؟ for لما تعرف عدد اللفات، while لما تعرف شرط التوقف.'),
+C('خطأ شائع: حلقة لا نهائية (نسيان التحديث)','لازم المتغير اللي في الشرط يتغير جوه الحلقة، وإلا الشرط يفضل صح.',r`x = 1;
+while x < 10
+    disp(x)
+end`,'<code>x</code> مبتتغيرش فالشرط <code>x &lt; 10</code> صح دايماً وهيطبع <code>1</code> إلى الأبد. لو علّق الماتلاب اضغط <b>Ctrl + C</b> في الـ Command Window لإيقافه.',r`x = 1;
+while x < 10
+    disp(x)
+    x = x + 1;     % التحديث
+end`,'علّمهم Ctrl+C قبل ما يجرّبوا. وقول: الحلقة اللانهائية مش كارثة، بنقدر نوقفها.'),
+L('أوامر التحكم: break و continue',['<code>break</code> بتخرج من الحلقة نهائياً.','<code>continue</code> بتتخطى باقي اللفة الحالية وتروح للفة اللي بعدها.','بيتستخدموا مع <code>if</code> جوه الحلقة.'],r`for k = 1:10
+    if mod(k,2) == 0
+        continue          % تخطى الأعداد الزوجية
+    end
+    if k > 7
+        break             % اخرج من الحلقة
+    end
+    fprintf('%d ', k);
+end
+fprintf('\n');            % 1 3 5 7`,'تتبّع بصوت عالي: k=8 زوجي فـ continue (مش break)، وk=9 هو اللي بيحقق break.'),
+L('الحلقات المتداخلة (Nested Loops)',['حلقة جوه حلقة: الداخلية بتكمل كلها مع كل لفة من الخارجية.','مناسبة للتعامل مع المصفوفات: صفوف (خارجية) وأعمدة (داخلية).','عدد اللفات الكلي = عدد لفات الخارجية × الداخلية.'],r`A = [1 2 3; 4 5 6];
+[r, c] = size(A);
+total = 0;
+for i = 1:r
+    for j = 1:c
+        total = total + A(i,j);
+    end
+end
+disp(total)               % 21`,'ارسم شبكة 2×3 وسهم يمر على الخلايا. بعدين وضّح إن sum(A(:)) هي النسخة المتجهة.'),
+L('مثال: جدول الضرب بحلقتين',['الحلقة الخارجية للصفوف، والداخلية للأعمدة.','<code>%4d</code> بتحجز 4 خانات لكل رقم عشان الجدول يتظبط.','<code>fprintf(\'\\n\')</code> بعد كل صف.'],r`for i = 1:3
+    for j = 1:4
+        fprintf('%4d', i*j);
+    end
+    fprintf('\n');
+end
+%    1   2   3   4
+%    2   4   6   8
+%    3   6   9  12`,'اطلب منهم يغيروا الأحجام لـ 9×9. وسؤال: إيه الفرق لو نسينا fprintf(\'\\n\')؟'),
+L('التحويل للمتجهات (Vectorisation): امتى منستخدمش حلقات؟',['العمليات المتجهة أسرع وأقصر وأوضح في أغلب العمليات الرياضية.','استخدم الحلقة لما كل لفة <b>معتمدة على اللي قبلها</b> (زي فيبوناتشي) أو منطق معقد.','<code>tic</code> و<code>toc</code> بيقيسوا الزمن.'],r`x = 1:1000000;
+tic
+s1 = 0;
+for k = 1:numel(x)
+    s1 = s1 + x(k)^2;
+end
+t1 = toc;
+tic
+s2 = sum(x.^2);
+t2 = toc;
+fprintf('loop: %.4f s, vector: %.4f s\n', t1, t2);   % المتجه أسرع بكتير`,'الأزمنة بتختلف من جهاز لجهاز، فشغّلها قدامهم. القاعدة: متجه لو ينفع، حلقة لو لازم.'),
+X('تمرين 4: مجموع الأعداد الزوجية','اجمع الأعداد الزوجية من 2 لـ 50 مرة بحلقة <code>for</code> ومرة بسطر متجه واحد.','الناتج <b>650</b> في الطريقتين.',r`s = 0;
+for k = 2:2:50
+    s = s + k;
+end
+disp(s)                 % 650
+disp(sum(2:2:50))       % 650`,'اربطه بفكرة الخطوة 2:2:50. ولو في وقت اسألهم عن مجموع المضاعفات للعدد 3.')
+];
+const S5=[
+L('مثال محلول 1: متتالية فيبوناتشي',['كل حد = مجموع اللي قبله بحدين: <code>F(k) = F(k-1) + F(k-2)</code>.','بنحجز المتجه الأول بـ <code>zeros</code> وبنبدأ بحدين معروفين.','مثال على حلقة كل لفة فيها معتمدة على اللي قبلها.'],r`n = 10;
+F = zeros(1, n);
+F(1) = 1; F(2) = 1;
+for k = 3:n
+    F(k) = F(k-1) + F(k-2);
+end
+disp(F)       % 1 1 2 3 5 8 13 21 34 55`,'اسأل: ليه مينفعش نحول المثال ده لعملية متجهة بسيطة؟ (لأن كل حد بيعتمد على اللي قبله).'),
+X('تتبع وتمرين: فيبوناتشي','تتبّع الحلقة لـ k = 3 لـ 6، وبعدين اكتب <code>while</code> بتلاقي أول حد في المتتالية أكبر من 100.',
+'التتبع: F(3)=2، F(4)=3، F(5)=5، F(6)=8. وأول حد أكبر من 100 هو <b>F(12) = 144</b>.'+tb(['k','F(k-1)','F(k-2)','F(k)'],[[3,1,1,2],[4,2,1,3],[5,3,2,5],[6,5,3,8]]),
+r`a = 1; b = 1; k = 2;
+while b <= 100
+    t = a + b;
+    a = b;
+    b = t;
+    k = k + 1;
+end
+fprintf('F(%d) = %d\n', k, b);   % F(12) = 144`,'خلّيهم يملوا الجدول بنفسهم قبل ما تعرض. ده تدريب مباشر على تتبع الكود.'),
+L('مثال محلول 2: الأعداد الأولية أقل من 50',['العدد الأولي ما بيقبلش القسمة إلا على 1 ونفسه.','لكل عدد n بنجرب القواسم من 2 لـ <code>floor(sqrt(n))</code>.','لو لقينا قاسم بنعلّم إنه مش أولي وبنخرج بـ <code>break</code> (مفيش داعي نكمل).'],r`for n = 2:49
+    isPrime = true;
+    for d = 2:floor(sqrt(n))
+        if mod(n, d) == 0
+            isPrime = false;
+            break
+        end
+    end
+    if isPrime
+        fprintf('%d ', n);
+    end
+end
+fprintf('\n');
+% 2 3 5 7 11 13 17 19 23 29 31 37 41 43 47`,'ركّز إن 2 و3 أوليين لأن المدى 2:1 فاضي والحلقة الداخلية مبتشتغلش.'),
+X('تتبع: ليه break؟','تتبّع الكود على n = 12 ثم n = 13، وقول كام لفة بتعمل الحلقة الداخلية في كل حالة ولو شلنا <code>break</code> يتغير إيه؟',
+'<b>n = 12</b>: <code>floor(sqrt(12)) = 3</code>، d = 2 → <code>mod(12,2) = 0</code> فنعلّم مش أولي ونخرج بـ break بعد لفة واحدة.<br><b>n = 13</b>: d = 2 و3 مفيش قاسم، فيفضل أولي بعد لفتين.<br>من غير break النتيجة نفسها صح لأن <code>isPrime</code> بتفضل false، لكن الحلقة بتكمل من غير فايدة.'+tb(['n','d','mod(n,d)','القرار'],[[12,2,0,'مش أولي (break)'],[13,2,1,'كمّل'],[13,3,1,'أولي']]),
+r`% للتأكد: أعداد أولية جاهزة
+primes(50)     % نفس القائمة`,'اربط break بالكفاءة: نخرج أول ما نعرف الإجابة. وprimes دالة جاهزة للمقارنة.'),
+L('مثال محلول 3: طريقة التنصيف (Bisection)',['بنحل <code>f(x) = 0</code> في مدى <code>[a, b]</code> فيه تغيير إشارة (<code>f(a)·f(b) &lt; 0</code>).','كل لفة: نقطة المنتصف <code>c</code>، ونحتفظ بالنصف اللي فيه الجذر.','بنوقف لما نص طول المدى يبقى أقل من التفاوت <code>tol</code>.','مثال: <code>x² − 2 = 0</code> يعني √2.'],r`f = @(x) x^2 - 2;
+a = 1; b = 2; tol = 1e-6;
+while (b - a)/2 > tol
+    c = (a + b)/2;
+    if f(a)*f(c) < 0
+        b = c;           % الجذر في النص الشمال
+    else
+        a = c;           % الجذر في النص اليمين
+    end
+end
+root = (a + b)/2;
+fprintf('root = %.4f\n', root);     % root = 1.4142`,'ده while عملي: مش عارفين عدد اللفات مسبقاً. اسأل: ليه f(a)*f(c) < 0؟ (تغيير الإشارة).'),
+X('تتبع وتمرين: التنصيف','املأ أول 4 لفات من التتبع للدالة <code>x² − 2</code> على <code>[1, 2]</code>، وكام لفة تقريباً هتلزم لوصول تفاوت <code>1e-6</code>؟',
+'المدى بينقسم على 2 كل لفة. التتبع:'+tb(['لفة','a','b','c','f(c)'],[[1,1,2,1.5,0.25],[2,1,1.5,1.25,-0.4375],[3,1.25,1.5,1.375,-0.109375],[4,1.375,1.5,1.4375,0.0664]])+'ومن المحاكاة بتاخد <b>19 لفة</b> تقريباً لحد تفاوت 1e-6 (لأن 2<sup>-20</sup> ≈ 1e-6).',
+r`k = 0;
+a = 1; b = 2;
+while (b - a)/2 > 1e-6
+    c = (a + b)/2;
+    if f(a)*f(c) < 0
+        b = c;
+    else
+        a = c;
+    end
+    k = k + 1;
+end
+disp(k)       % 19`,'اربطه بالكفاءة: كل لفة بتكسب رقم عشري تقريباً. ممتاز للمقارنة مع طرق تانية.'),
+L('مثال محلول 4: الترتيب بالفقاعات (Bubble Sort)',['بنقارن كل عنصرين متجاورين وبنبدّلهم لو كانوا بالعكس.','بعد كل مرور (Pass) أكبر عنصر بيوصل مكانه الأخير.','نحتاج <code>n-1</code> مرور، وحلقة داخلية بتقصر مع كل مرور.','التبديل بيحتاج متغير مؤقت <code>tmp</code>.'],r`v = [5 2 9 1];
+n = length(v);
+for pass = 1:n-1
+    for k = 1:n-pass
+        if v(k) > v(k+1)
+            tmp = v(k);
+            v(k) = v(k+1);
+            v(k+1) = tmp;
+        end
+    end
+end
+disp(v)       % 1 2 5 9`,'نفّذ على السبورة بالمقارنات. اسأل: ليه مفيش داعي نقارن آخر عنصر بعد المرور الأول؟'),
+X('تتبع وتمرين: الترتيب بالفقاعات','تتبّع المتجه <code>[5 2 9 1]</code> بعد كل مرور، وبعدين عدّل الكود يرتب تنازلياً.',
+'التتبع:'+tb(['المرور','المتجه بعده'],[['البداية','5 2 9 1'],['1','2 5 1 9'],['2','2 1 5 9'],['3','1 2 5 9']])+'للترتيب التنازلي بنعكس علامة المقارنة: <code>v(k) &lt; v(k+1)</code>.',
+r`% تنازلي
+for pass = 1:n-1
+    for k = 1:n-pass
+        if v(k) < v(k+1)        % عكس المقارنة
+            tmp = v(k); v(k) = v(k+1); v(k+1) = tmp;
+        end
+    end
+end
+% للمقارنة: sort(v, 'descend')`,'وضّح إن sort جاهزة أسرع بكتير، لكن فهم الخوارزمية مهم للمنطق. اسأل: إيه التعقيد؟ (n² تقريباً).'),
+L('الخلاصة والخطوة الجاية',['<b>M-files</b>: سكريبت للمشكلة الكاملة، ودالة لأداة قابلة لإعادة الاستخدام.','<b>الإدخال والإخراج</b>: <code>input</code> و<code>disp</code> و<code>fprintf</code> و<code>num2str</code>.','<b>الشروط</b>: <code>if</code> بترتيب صحيح، <code>switch</code> بالمساواة، والأقنعة بدل الحلقات.','<b>الحلقات</b>: <code>for</code> لعدد معروف، <code>while</code> لشرط، مع <code>break</code> و<code>continue</code>.','<b>القاعدة الذهبية</b>: تتبّع الكود بإيدك، والمتجه أحسن لو ينفع.'],r`% تحدّي ختامي: اطبع مجموع الأعداد الأولية أقل من 50
+total = 0;
+for n = 2:49
+    if isprime(n)
+        total = total + n;
+    end
+end
+disp(total)     % 328`,'اطلب منهم يتوقعوا الناتج. (مجموع الأعداد الأولية أقل من 50 = 328). وشجعهم يجربوا الأمثلة على جهازهم.')
+];
+const D=[];[S1,S2,S3].forEach((arr,si)=>arr.forEach(d=>{d.s=si;D.push(d)}));
+const deck=document.getElementById('deck');
+D.forEach((d,i)=>{const s=document.createElement('section');s.className='slide';
+let h=`<span class="tag">${SECN[d.s]}</span><span class="num">الشريحة ${i+1} من ${D.length}</span><h2>${d.t}</h2>`;
+if(d.k==='l')h+=`<div class="cols"><div class="card"><h3>الشرح</h3><ul>${d.pts.map(p=>'<li>'+p+'</li>').join('')}</ul>${d.x||''}</div><div class="card"><h3>الكود</h3>${code(d.c)}</div></div>`;
+else if(d.k==='c')h+=`<div class="cols"><div class="card"><h3>الشرح</h3><p>${d.idea}</p></div><div class="card bad"><h3>كود فيه خطأ شائع</h3>${code(d.bug)}<button onclick="const x=this.nextElementSibling;x.hidden=!x.hidden;this.textContent=x.hidden?'إظهار الخطأ / التصحيح':'إخفاء التصحيح'">إظهار الخطأ / التصحيح</button><div hidden><div class="box err"><div class="lbl">الخطأ وسببه:</div><p>${d.why}</p></div><div class="box ok"><div class="lbl">الكود الصحيح:</div>${code(d.fix)}</div></div></div></div>`;
+else h+=`<div class="card"><h3>التمرين</h3><p>${d.q}</p><button onclick="const x=this.nextElementSibling;x.hidden=!x.hidden;this.textContent=x.hidden?'إظهار الحل':'إخفاء الحل'">إظهار الحل</button><div hidden><div class="box ok"><div class="lbl">الحل:</div><p>${d.a}</p>${code(d.ac)}</div></div></div>`;
+s.innerHTML=h;deck.appendChild(s)});
+const sl=[...deck.children];let cur=0;
+function go(n){cur=Math.max(0,Math.min(sl.length-1,n));sl.forEach((s,i)=>s.classList.toggle('on',i===cur));sl[cur].scrollTop=0;document.getElementById('ct').textContent=(cur+1)+' / '+sl.length;document.querySelector('#pg i').style.width=((cur+1)/sl.length*100)+'%'}
+document.getElementById('nx').onclick=()=>go(cur+1);document.getElementById('pv').onclick=()=>go(cur-1);
+addEventListener('keydown',e=>{const k=e.key;if(k==='ArrowLeft'||k==='PageDown')go(cur+1);else if(k==='ArrowRight'||k==='PageUp')go(cur-1);else if(k==='Home')go(0);else if(k==='End')go(sl.length-1)});
+go(0);
+</script></body></html>
